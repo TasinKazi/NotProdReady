@@ -1,0 +1,77 @@
+.page {
+  padding: 2rem 0 4rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 0.25rem;
+  line-height: 1.2;
+}
+
+.tagline {
+  font-size: 0.875rem;
+  color: #525252;
+  margin: 0;
+}
+
+.table {
+  width: 100%;
+}
+
+.tableRow {
+  cursor: pointer;
+}
+
+.tableRow:hover td {
+  background-color: #e8e8e8;
+}
+
+.releaseCode {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8125rem;
+  color: #161616;
+}
+
+.decisionGo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #198038;
+}
+
+.decisionNogo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #da1e28;
+}
+
+.scoreHigh {
+  font-weight: 600;
+  color: #198038;
+}
+
+.scoreMid {
+  font-weight: 600;
+  color: #f1c21b;
+}
+
+.scoreLow {
+  font-weight: 600;
+  color: #da1e28;
+}

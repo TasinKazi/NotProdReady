@@ -1,0 +1,93 @@
+.page {
+  padding: 2rem 0 4rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 0.25rem;
+  line-height: 1.2;
+}
+
+.tagline {
+  font-size: 0.875rem;
+  color: #525252;
+  margin: 0;
+}
+
+.formGroup {
+  margin-bottom: 2rem;
+}
+
+.uploaderBox {
+  margin-top: 0.5rem;
+}
+
+.metaGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Checks panel ──────────────────────────────────────────── */
+.checksTile {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0;
+  height: 100%;
+}
+
+.checksTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.checksList {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.checkItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #161616;
+}
+
+.checkIcon {
+  color: #198038;
+  flex-shrink: 0;
+}
+
+.checksNotice {
+  margin-top: 0.5rem;
+}
+
+/* ── Actions ───────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+  margin-top: 1rem;
+}

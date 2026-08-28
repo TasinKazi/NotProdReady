@@ -1,0 +1,30 @@
+.page {
+  padding: 3rem 0;
+}
+
+.tile {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.icon {
+  color: #8d8d8d;
+}
+
+.heading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0;
+}
+
+.body {
+  font-size: 0.875rem;
+  color: #525252;
+  margin: 0;
+  line-height: 1.5;
+}

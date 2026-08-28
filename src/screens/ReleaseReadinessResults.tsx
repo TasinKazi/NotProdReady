@@ -25,8 +25,13 @@ import OverviewTab from './tabs/OverviewTab'
 import FindingsTab from './tabs/FindingsTab'
 import EvidenceTab from './tabs/EvidenceTab'
 import AgentActivityTab from './tabs/AgentActivityTab'
+import type { ViewId } from '../types/navigation'
 
-export default function ReleaseReadinessResults() {
+interface Props {
+  onNavigate?: (view: ViewId) => void
+}
+
+export default function ReleaseReadinessResults({ onNavigate }: Props) {
   const { app, release, environment, decision, readiness, summary, analysis } = mockAnalysis
 
   const isNoGo = decision === 'NO-GO'
@@ -99,7 +104,11 @@ export default function ReleaseReadinessResults() {
               <Button kind="primary" renderIcon={ArrowRight}>
                 Ask Bob to remediate
               </Button>
-              <Button kind="secondary" renderIcon={Renew}>
+              <Button
+                kind="secondary"
+                renderIcon={Renew}
+                onClick={() => onNavigate?.('new-analysis')}
+              >
                 Run analysis again
               </Button>
               <Button kind="ghost" renderIcon={Download}>

@@ -1,0 +1,213 @@
+.page {
+  padding: 2rem 0 4rem;
+}
+
+.titleRow {
+  margin-bottom: 1.25rem;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.releaseMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.statusBar {
+  margin-bottom: 2rem;
+  padding: 0.875rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-left: 4px solid #0f62fe;
+  display: flex;
+  align-items: center;
+}
+
+.statusDone {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #198038;
+}
+
+/* ── Tiles ─────────────────────────────────────────────────── */
+.agentTile,
+.evidenceTile {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0;
+  height: 100%;
+}
+
+.tileTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* ── Agent groups ──────────────────────────────────────────── */
+.agentGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.agentGroup {
+  /* no extra styles needed */
+}
+
+.groupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.groupName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+}
+
+.groupLoading {
+  /* size override */
+}
+
+.stepList {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.stepDone {
+  font-size: 0.8125rem;
+  color: #525252;
+}
+
+.stepActive {
+  font-size: 0.8125rem;
+  color: #161616;
+  font-weight: 500;
+}
+
+.stepWaiting {
+  font-size: 0.8125rem;
+  color: #8d8d8d;
+}
+
+/* ── Status icons ──────────────────────────────────────────── */
+.iconDone {
+  color: #198038;
+  flex-shrink: 0;
+}
+
+.iconActive {
+  color: #0f62fe;
+  flex-shrink: 0;
+}
+
+.iconWaiting {
+  color: #8d8d8d;
+  flex-shrink: 0;
+}
+
+/* ── Evidence ──────────────────────────────────────────────── */
+.evidenceEmpty {
+  font-size: 0.8125rem;
+  color: #8d8d8d;
+  font-style: italic;
+}
+
+.evidenceList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.evidenceItem {
+  padding: 0.75rem;
+  background: #f4f4f4;
+  border-radius: 2px;
+}
+
+.evidenceLabelBlock {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #da1e28;
+  background: #fff1f1;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+  margin-bottom: 0.25rem;
+}
+
+.evidenceLabelWarn {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #8e6a00;
+  background: #fdf6e3;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+  margin-bottom: 0.25rem;
+}
+
+.evidenceLabelInfo {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0043ce;
+  background: #e8f4ff;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+  margin-bottom: 0.25rem;
+}
+
+.evidenceSource {
+  display: block;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: #525252;
+  margin-bottom: 0.25rem;
+}
+
+.evidenceValue {
+  font-size: 0.8125rem;
+  color: #161616;
+  margin: 0;
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ── CTA ───────────────────────────────────────────────────── */
+.ctaRow {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
