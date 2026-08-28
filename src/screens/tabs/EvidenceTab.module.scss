@@ -1,0 +1,116 @@
+.root {
+  padding: 1.5rem 0 2rem;
+}
+
+.preamble {
+  font-size: 0.875rem;
+  color: #525252;
+  margin-bottom: 1.25rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.card {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0;
+  padding: 1.125rem 1.25rem !important;
+}
+
+.fileHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+  padding-bottom: 0.625rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.fileIcon {
+  color: #6f6f6f;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #0043ce;
+}
+
+.refList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.refItem {
+  padding-left: 0.875rem;
+  border-left: 2px solid #e0e0e0;
+}
+
+.refMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+
+.severityBlock {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #da1e28;
+  background: #fff1f1;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+}
+
+.severityWarn {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8e6a00;
+  background: #fdf6e3;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+}
+
+.severityPass {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #198038;
+  background: #defbe6;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+}
+
+.refId {
+  font-size: 0.75rem;
+  font-family: 'IBM Plex Mono', monospace;
+  color: #8d8d8d;
+}
+
+.refTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #161616;
+}
+
+.refNote {
+  font-size: 0.8125rem;
+  color: #525252;
+  margin: 0;
+  line-height: 1.5;
+}

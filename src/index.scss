@@ -1,0 +1,23 @@
+@use '@carbon/react/scss/reset';
+@use '@carbon/react/scss/themes';
+@use '@carbon/react/scss/theme' with ($theme: themes.$white);
+@use '@carbon/react/scss/components/button';
+@use '@carbon/react/scss/components/tabs';
+@use '@carbon/react/scss/components/tag';
+@use '@carbon/react/scss/components/tile';
+@use '@carbon/react/scss/components/structured-list';
+@use '@carbon/react/scss/components/accordion';
+@use '@carbon/react/scss/components/code-snippet';
+@use '@carbon/react/scss/components/notification';
+@use '@carbon/react/scss/grid';
+@use '@carbon/react/scss/components/tooltip';
+@use '@carbon/react/scss/type';
+@use '@carbon/react/scss/spacing';
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
+body {
+  font-family: 'IBM Plex Sans', sans-serif;
+  background-color: #f4f4f4;
+  color: #161616;
+}

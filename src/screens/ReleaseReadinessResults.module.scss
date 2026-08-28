@@ -1,0 +1,246 @@
+.page {
+  min-height: 100vh;
+  background-color: #f4f4f4;
+}
+
+/* ── Page header ───────────────────────────────────────────── */
+.pageHeader {
+  background-color: #161616;
+  padding: 1.5rem 0 1rem;
+  border-bottom: 1px solid #393939;
+}
+
+.headerEyebrow {
+  font-size: 0.75rem;
+  color: #a8a8a8;
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.appName {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f4f4f4;
+}
+
+.headerSeparator {
+  color: #6f6f6f;
+  font-weight: 300;
+}
+
+/* ── Verdict band ──────────────────────────────────────────── */
+.verdictBandNogo {
+  background-color: #fff1f1;
+  border-bottom: 3px solid #da1e28;
+  padding: 1.5rem 0;
+}
+
+.verdictBandGo {
+  background-color: #defbe6;
+  border-bottom: 3px solid #198038;
+  padding: 1.5rem 0;
+}
+
+.verdictLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.verdictIconNogo {
+  color: #da1e28;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.verdictIconGo {
+  color: #198038;
+  flex-shrink: 0;
+  margin-top: 0.1rem;
+}
+
+.verdictLabel {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #161616;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  margin-bottom: 0.375rem;
+}
+
+.verdictSupport {
+  font-size: 0.875rem;
+  color: #525252;
+  max-width: 36rem;
+  line-height: 1.5;
+}
+
+.verdictRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  height: 100%;
+  gap: 0.5rem;
+}
+
+.scoreBlock {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.scoreValue {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #161616;
+  line-height: 1;
+}
+
+.scoreDivider {
+  font-size: 1.5rem;
+  color: #8d8d8d;
+  font-weight: 300;
+}
+
+.scoreMax {
+  font-size: 1.25rem;
+  color: #525252;
+  font-weight: 400;
+}
+
+.scoreCounts {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.countBlocker {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #da1e28;
+  font-weight: 500;
+}
+
+.countWarning {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #f1c21b;
+  font-weight: 500;
+}
+
+.countPassed {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  color: #198038;
+  font-weight: 500;
+}
+
+.countSep {
+  color: #c6c6c6;
+}
+
+/* ── Actions bar ───────────────────────────────────────────── */
+.actionsBar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  padding: 1rem 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ── Tabs wrapper ──────────────────────────────────────────── */
+.tabsWrapper {
+  background-color: #ffffff;
+  padding-top: 0;
+}
+
+.tabsWrapper :global(.cds--tab-content) {
+  padding: 0;
+}
+
+/* ── Analysis footer ───────────────────────────────────────── */
+.analysisFooter {
+  padding: 2rem 0 3rem;
+  background-color: #f4f4f4;
+}
+
+.analysisTile {
+  background-color: #ffffff !important;
+  border: 1px solid #e0e0e0;
+}
+
+.analysisHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.analysisIcon {
+  color: #0f62fe;
+  flex-shrink: 0;
+}
+
+.analysisTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #161616;
+}
+
+.analysisMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem 2.5rem;
+  margin: 0;
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.metaItem dt {
+  font-size: 0.75rem;
+  color: #6f6f6f;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.metaItem dd {
+  font-size: 0.875rem;
+  color: #161616;
+  font-weight: 500;
+  margin: 0;
+}
+
+.metaItem code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.8125rem;
+  background: #f4f4f4;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 2px;
+}
