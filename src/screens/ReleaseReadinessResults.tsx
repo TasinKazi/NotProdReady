@@ -21,6 +21,8 @@ import {
 } from '@carbon/icons-react'
 import styles from './ReleaseReadinessResults.module.scss'
 import { mockAnalysis } from '../data/mockAnalysis'
+import type { MockAnalysis, Finding, AgentStep } from '../data/mockAnalysis'
+import type { ApiReleaseResult, ApiFinding, ApiAgentStep } from '../api/types'
 import OverviewTab from './tabs/OverviewTab'
 import FindingsTab from './tabs/FindingsTab'
 import EvidenceTab from './tabs/EvidenceTab'
@@ -28,11 +30,71 @@ import AgentActivityTab from './tabs/AgentActivityTab'
 import type { ViewId } from '../types/navigation'
 
 interface Props {
+  apiResult?: ApiReleaseResult | null
   onNavigate?: (view: ViewId) => void
 }
 
-export default function ReleaseReadinessResults({ onNavigate }: Props) {
-  const { app, release, environment, decision, readiness, summary, analysis } = mockAnalysis
+/**
+ * Map an ApiFinding (from the API) to the Finding shape the tab components expect.
+ * The backend already populates the legacy UI-compat fields; we just alias them.
+ */
+function mapFinding(f: ApiFinding): Finding {
+  return {
+    id: f.id,
+    title: f.title,
+    severity: f.severity as Finding['severity'],
+    runbook: f.runbook,
+    repository: f.repository,
+    missing: f.missing,
+    migration: f.migration,
+    evidence: f.evidence_text ?? f.explanation,
+    evidenceFile: f.evidence_file,
+    recommendation: f.recommendation,
+  }
+}
+
+function mapAgentStep(s: ApiAgentStep): AgentStep {
+  return {
+    id: s.id,
+    timestamp: s.timestamp,
+    action: s.action,
+    target: s.target,
+    result: s.result,
+    status: s.status as AgentStep['status'],
+  }
+}
+
+/**
+ * Build a MockAnalysis-shaped object from the API result so the existing tab
+ * components work without modification.
+ */
+function buildDisplayData(apiResult: ApiReleaseResult): MockAnalysis {
+  return {
+    app: apiResult.app,
+    release: apiResult.release,
+    environment: apiResult.environment,
+    decision: apiResult.decision as MockAnalysis['decision'],
+    readiness: { score: apiResult.readiness_score },
+    summary: {
+      blockers: apiResult.summary.blockers,
+      warnings: apiResult.summary.warnings,
+      passed: apiResult.summary.passed,
+    },
+    findings: apiResult.findings.map(mapFinding),
+    agentActivity: apiResult.agent_activity.map(mapAgentStep),
+    analysis: {
+      id: apiResult.metadata.id,
+      duration: apiResult.metadata.duration,
+      filesInspected: apiResult.metadata.files_inspected,
+      commandsExecuted: apiResult.metadata.commands_executed,
+      completedAt: apiResult.metadata.completed_at,
+    },
+  }
+}
+
+export default function ReleaseReadinessResults({ apiResult, onNavigate }: Props) {
+  const data: MockAnalysis = apiResult ? buildDisplayData(apiResult) : mockAnalysis
+  const { app, release, environment, decision, readiness, summary, analysis } = data
 
   const isNoGo = decision === 'NO-GO'
 
@@ -66,7 +128,8 @@ export default function ReleaseReadinessResults({ onNavigate }: Props) {
               <div>
                 <p className={styles.verdictLabel}>{decision}</p>
                 <p className={styles.verdictSupport}>
-                  Release blockers were found between the deployment runbook and the actual application.
+                  {apiResult?.support_message ??
+                    'Release blockers were found between the deployment runbook and the actual application.'}
                 </p>
               </div>
             </div>
@@ -132,16 +195,16 @@ export default function ReleaseReadinessResults({ onNavigate }: Props) {
               </TabList>
               <TabPanels>
                 <TabPanel>
-                  <OverviewTab data={mockAnalysis} />
+                  <OverviewTab data={data} />
                 </TabPanel>
                 <TabPanel>
-                  <FindingsTab findings={mockAnalysis.findings} />
+                  <FindingsTab findings={data.findings} />
                 </TabPanel>
                 <TabPanel>
-                  <EvidenceTab findings={mockAnalysis.findings} />
+                  <EvidenceTab findings={data.findings} />
                 </TabPanel>
                 <TabPanel>
-                  <AgentActivityTab activity={mockAnalysis.agentActivity} />
+                  <AgentActivityTab activity={data.agentActivity} />
                 </TabPanel>
               </TabPanels>
             </Tabs>

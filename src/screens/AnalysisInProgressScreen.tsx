@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   Button,
   Column,
   Grid,
   InlineLoading,
+  InlineNotification,
   Tag,
   Tile,
 } from '@carbon/react'
@@ -13,9 +14,13 @@ import {
   RadioButton as RadioButtonIcon,
 } from '@carbon/icons-react'
 import type { ViewId } from '../types/navigation'
+import type { ApiReleaseResult, SseMessage } from '../api/types'
+import { getAnalysisResult, subscribeToEvents } from '../api/analyses'
 import styles from './AnalysisInProgressScreen.module.scss'
 
 interface Props {
+  analysisId: string | null
+  onComplete: (result: ApiReleaseResult) => void
   onNavigate: (view: ViewId) => void
 }
 
@@ -46,9 +51,7 @@ interface EvidenceEntry {
   severity: 'block' | 'warn' | 'info'
 }
 
-// ── Mock progression timeline ───────────────────────────────
-// Each tick advances the state. Designed so real SSE events
-// can replace these setTimeout calls later.
+// ── Initial state ────────────────────────────────────────────
 
 const INITIAL_GROUPS: AgentGroup[] = [
   {
@@ -79,101 +82,199 @@ const INITIAL_GROUPS: AgentGroup[] = [
   },
 ]
 
-const INITIAL_EVIDENCE: EvidenceEntry[] = []
+// ── SSE event → UI state mapping ─────────────────────────────
+//
+// This is the only place that knows how to translate backend
+// event names to the agent activity model. Replacing
+// MockBobRunner with BobShellRunner in Step 9 only requires
+// the runner to emit the same event names — this code stays.
 
-type ProgressEvent =
-  | { type: 'step-done'; groupId: string; stepId: string }
-  | { type: 'group-start'; groupId: string }
-  | { type: 'group-step-active'; groupId: string; stepId: string }
-  | { type: 'evidence'; entry: EvidenceEntry }
+function applySSEMessage(
+  groups: AgentGroup[],
+  evidence: EvidenceEntry[],
+  msg: SseMessage,
+): { groups: AgentGroup[]; evidence: EvidenceEntry[] } {
+  const evt = msg.event
+  const d = msg.data as Record<string, unknown>
 
-const TIMELINE: Array<{ delayMs: number; event: ProgressEvent }> = [
-  { delayMs: 1200, event: { type: 'step-done', groupId: 'runbook-analyst', stepId: 'ra-1' } },
-  { delayMs: 1600, event: { type: 'group-start', groupId: 'repo-inspector' } },
-  { delayMs: 2000, event: { type: 'group-step-active', groupId: 'repo-inspector', stepId: 'ri-1' } },
-  {
-    delayMs: 2400,
-    event: {
-      type: 'evidence',
-      entry: { id: 'e1', label: 'RUNBOOK', source: 'deployment-runbook.md', value: 'Node.js 18', severity: 'block' },
-    },
-  },
-  { delayMs: 2800, event: { type: 'step-done', groupId: 'repo-inspector', stepId: 'ri-1' } },
-  {
-    delayMs: 3200,
-    event: {
-      type: 'evidence',
-      entry: { id: 'e2', label: 'REPOSITORY', source: 'package.json', value: 'requires Node >=20', severity: 'block' },
-    },
-  },
-  { delayMs: 3600, event: { type: 'group-step-active', groupId: 'repo-inspector', stepId: 'ri-2' } },
-  {
-    delayMs: 4000,
-    event: {
-      type: 'evidence',
-      entry: { id: 'e3', label: 'COMMAND', source: 'package.json → scripts', value: 'npm run production → script not found', severity: 'block' },
-    },
-  },
-  { delayMs: 4400, event: { type: 'step-done', groupId: 'repo-inspector', stepId: 'ri-2' } },
-  { delayMs: 4800, event: { type: 'group-step-active', groupId: 'repo-inspector', stepId: 'ri-3' } },
-]
+  // Helper to update a step in a group
+  function setStepStatus(gId: string, sId: string, status: StepStatus): AgentGroup[] {
+    return groups.map((g) =>
+      g.id !== gId
+        ? g
+        : { ...g, steps: g.steps.map((s) => (s.id === sId ? { ...s, status } : s)) },
+    )
+  }
 
-function applyEvent(groups: AgentGroup[], event: ProgressEvent): AgentGroup[] {
-  return groups.map((g) => {
-    if (event.type === 'step-done' && g.id === event.groupId) {
+  function setGroupStatus(gId: string, status: StepStatus): AgentGroup[] {
+    return groups.map((g) => (g.id === gId ? { ...g, groupStatus: status } : g))
+  }
+
+  switch (evt) {
+    case 'analysis.started':
+      return { groups, evidence }
+
+    case 'document.analysis.started':
       return {
-        ...g,
-        steps: g.steps.map((s) =>
-          s.id === event.stepId ? { ...s, status: 'done' as StepStatus } : s
-        ),
+        groups: setGroupStatus('runbook-analyst', 'active'),
+        evidence,
       }
+
+    case 'document.requirement.found': {
+      const label = String(d.type ?? 'RUNBOOK').toUpperCase()
+      const value = String(d.value ?? '')
+      const source = String(d.source ?? '')
+      const newEntry: EvidenceEntry = {
+        id: `e-${msg.sequence}`,
+        label,
+        source,
+        value,
+        severity: 'info',
+      }
+      return { groups, evidence: [...evidence, newEntry] }
     }
-    if (event.type === 'group-start' && g.id === event.groupId) {
-      return { ...g, groupStatus: 'active' as StepStatus }
-    }
-    if (event.type === 'group-step-active' && g.id === event.groupId) {
+
+    case 'document.analysis.completed':
       return {
-        ...g,
-        steps: g.steps.map((s) =>
-          s.id === event.stepId ? { ...s, status: 'active' as StepStatus } : s
+        groups: setStepStatus('runbook-analyst', 'ra-1', 'done').map((g) =>
+          g.id === 'runbook-analyst' ? { ...g, groupStatus: 'done' } : g,
         ),
+        evidence,
       }
+
+    case 'repository.analysis.started':
+      return {
+        groups: setGroupStatus('repo-inspector', 'active'),
+        evidence,
+      }
+
+    case 'repository.file.inspected': {
+      const file = String(d.file ?? '')
+      // Advance the appropriate sub-step
+      let newGroups = groups
+      if (file === 'package.json') {
+        newGroups = setStepStatus('repo-inspector', 'ri-1', 'done')
+      } else if (file === '.env.example') {
+        newGroups = setStepStatus('repo-inspector', 'ri-2', 'active')
+      } else if (file === 'src/services/paymentService.js') {
+        newGroups = setStepStatus('repo-inspector', 'ri-2', 'done')
+      } else if (file.startsWith('migrations/')) {
+        newGroups = setStepStatus('repo-inspector', 'ri-3', 'active')
+      }
+      return { groups: newGroups, evidence }
     }
-    return g
-  })
+
+    case 'finding.detected': {
+      const sev = String(d.severity ?? 'BLOCK').toLowerCase() as EvidenceEntry['severity']
+      const newEntry: EvidenceEntry = {
+        id: `f-${msg.sequence}`,
+        label: sev === 'block' ? 'BLOCK' : sev === 'warn' ? 'WARN' : 'PASS',
+        source: String(d.title ?? ''),
+        value: `${String(d.claim ?? '')} → ${String(d.actual ?? '')}`,
+        severity: sev === 'block' ? 'block' : sev === 'warn' ? 'warn' : 'info',
+      }
+      return { groups, evidence: [...evidence, newEntry] }
+    }
+
+    case 'verification.started':
+      return {
+        groups: setGroupStatus('release-verifier', 'active').map((g) =>
+          g.id === 'release-verifier'
+            ? { ...g, steps: g.steps.map((s) => ({ ...s, status: 'active' as StepStatus })) }
+            : g,
+        ),
+        evidence,
+      }
+
+    case 'verification.completed':
+      return {
+        groups: groups.map((g) =>
+          g.id === 'release-verifier'
+            ? {
+                ...g,
+                groupStatus: 'done' as StepStatus,
+                steps: g.steps.map((s) => ({ ...s, status: 'done' as StepStatus })),
+              }
+            : g,
+        ),
+        evidence,
+      }
+
+    case 'analysis.synthesizing':
+      return { groups, evidence }
+
+    default:
+      return { groups, evidence }
+  }
 }
 
 // ── Component ───────────────────────────────────────────────
 
-export default function AnalysisInProgressScreen({ onNavigate }: Props) {
+export default function AnalysisInProgressScreen({
+  analysisId,
+  onComplete,
+  onNavigate,
+}: Props) {
   const [groups, setGroups] = useState<AgentGroup[]>(INITIAL_GROUPS)
-  const [evidence, setEvidence] = useState<EvidenceEntry[]>(INITIAL_EVIDENCE)
+  const [evidence, setEvidence] = useState<EvidenceEntry[]>([])
   const [finished, setFinished] = useState(false)
+  const [sseError, setSseError] = useState<string | null>(null)
+  const [appName, setAppName] = useState<string>('NorthRiver Payments API')
+  const [releaseVer, setReleaseVer] = useState<string>('v2.4.0')
+  const [envName, setEnvName] = useState<string>('Production')
+
+  // Mutable ref so the SSE handler always sees latest state
+  const stateRef = useRef({ groups: INITIAL_GROUPS, evidence: [] as EvidenceEntry[] })
 
   useEffect(() => {
-    const timers: ReturnType<typeof setTimeout>[] = []
+    if (!analysisId) return
 
-    TIMELINE.forEach(({ delayMs, event }) => {
-      timers.push(
-        setTimeout(() => {
-          if (event.type === 'evidence') {
-            setEvidence((prev) => [...prev, event.entry])
-          } else {
-            setGroups((prev) => applyEvent(prev, event))
-          }
-        }, delayMs)
-      )
+    const cleanup = subscribeToEvents(analysisId, {
+      onMessage: (msg: SseMessage) => {
+        // Capture header metadata from first event
+        if (msg.event === 'analysis.started') {
+          const d = msg.data as Record<string, string>
+          if (d.application_name) setAppName(d.application_name)
+          if (d.release_version) setReleaseVer(d.release_version)
+          if (d.environment) setEnvName(d.environment)
+        }
+
+        const next = applySSEMessage(
+          stateRef.current.groups,
+          stateRef.current.evidence,
+          msg,
+        )
+        stateRef.current = next
+        setGroups([...next.groups])
+        setEvidence([...next.evidence])
+      },
+
+      onDone: () => {
+        setFinished(true)
+      },
+
+      onError: (err: string) => {
+        setSseError(`Connection error: ${err}. Click "View results" when ready.`)
+        setFinished(true)
+      },
     })
 
-    // Auto-complete after timeline finishes
-    timers.push(
-      setTimeout(() => {
-        setFinished(true)
-      }, 5600)
-    )
+    return cleanup
+  }, [analysisId])
 
-    return () => timers.forEach(clearTimeout)
-  }, [])
+  async function handleViewResults() {
+    if (!analysisId) {
+      onNavigate('analysis-result')
+      return
+    }
+    try {
+      const result = await getAnalysisResult(analysisId)
+      onComplete(result)
+    } catch {
+      // Fallback: navigate without result — result screen will use mock data
+      onNavigate('analysis-result')
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -182,10 +283,10 @@ export default function AnalysisInProgressScreen({ onNavigate }: Props) {
         <Column sm={4} md={8} lg={16}>
           <div className={styles.titleRow}>
             <div>
-              <h1 className={styles.heading}>Analyzing NorthRiver Payments API</h1>
+              <h1 className={styles.heading}>Analyzing {appName}</h1>
               <div className={styles.releaseMeta}>
-                <Tag type="cool-gray" size="md">v2.4.0</Tag>
-                <Tag type="cool-gray" size="md">Production</Tag>
+                <Tag type="cool-gray" size="md">{releaseVer}</Tag>
+                <Tag type="cool-gray" size="md">{envName}</Tag>
               </div>
             </div>
           </div>
@@ -202,6 +303,15 @@ export default function AnalysisInProgressScreen({ onNavigate }: Props) {
               />
             )}
           </div>
+          {sseError && (
+            <InlineNotification
+              kind="warning"
+              title="Connection warning"
+              subtitle={sseError}
+              lowContrast
+              hideCloseButton
+            />
+          )}
         </Column>
 
         {/* Agent activity */}
@@ -276,10 +386,7 @@ export default function AnalysisInProgressScreen({ onNavigate }: Props) {
         {finished && (
           <Column sm={4} md={8} lg={16}>
             <div className={styles.ctaRow}>
-              <Button
-                kind="primary"
-                onClick={() => onNavigate('analysis-result')}
-              >
+              <Button kind="primary" onClick={handleViewResults}>
                 View results
               </Button>
             </div>

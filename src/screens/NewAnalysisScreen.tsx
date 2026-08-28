@@ -20,10 +20,12 @@ import {
   CheckmarkFilled,
 } from '@carbon/icons-react'
 import type { ViewId } from '../types/navigation'
+import { createAnalysis } from '../api/analyses'
 import styles from './NewAnalysisScreen.module.scss'
 
 interface Props {
-  onNavigate: (view: ViewId) => void
+  onAnalysisCreated: (analysisId: string) => void
+  onNavigate?: (view: ViewId) => void
 }
 
 const CHECKS = [
@@ -33,22 +35,27 @@ const CHECKS = [
   { id: 'migration', label: 'Migration & rollback' },
 ]
 
-type UploadedFile = { name: string; size: number; uuid: string }
+type UploadedFile = { name: string; size: number; uuid: string; file?: File }
 
-export default function NewAnalysisScreen({ onNavigate }: Props) {
+export default function NewAnalysisScreen({ onAnalysisCreated }: Props) {
   const [repoFiles, setRepoFiles] = useState<UploadedFile[]>([])
   const [runbookFiles, setRunbookFiles] = useState<UploadedFile[]>([])
   const [app, setApp] = useState('NorthRiver Payments API')
   const [release, setRelease] = useState('v2.4.0')
   const [environment, setEnvironment] = useState('Production')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [isSample, setIsSample] = useState(false)
 
   function handleRepoAdd(files: File[]) {
     const added = files.map((f) => ({
       name: f.name,
       size: f.size,
       uuid: Math.random().toString(36).slice(2),
+      file: f,
     }))
     setRepoFiles((prev) => [...prev, ...added])
+    setIsSample(false)
   }
 
   function handleRunbookAdd(files: File[]) {
@@ -56,8 +63,10 @@ export default function NewAnalysisScreen({ onNavigate }: Props) {
       name: f.name,
       size: f.size,
       uuid: Math.random().toString(36).slice(2),
+      file: f,
     }))
     setRunbookFiles((prev) => [...prev, ...added])
+    setIsSample(false)
   }
 
   function loadSample() {
@@ -66,11 +75,30 @@ export default function NewAnalysisScreen({ onNavigate }: Props) {
     setApp('NorthRiver Payments API')
     setRelease('v2.4.0')
     setEnvironment('Production')
+    setIsSample(true)
+    setError(null)
   }
 
-  function handleAnalyze() {
-    onNavigate('analysis-in-progress')
+  async function handleAnalyze() {
+    setError(null)
+    setSubmitting(true)
+    try {
+      const response = await createAnalysis({
+        applicationName: app,
+        releaseVersion: release,
+        environment,
+        repository: isSample ? undefined : repoFiles[0]?.file,
+        deploymentRunbook: isSample ? undefined : runbookFiles[0]?.file,
+        useSample: isSample,
+      })
+      onAnalysisCreated(response.analysis_id)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to start analysis')
+      setSubmitting(false)
+    }
   }
+
+  const canSubmit = (repoFiles.length > 0 && runbookFiles.length > 0) && !submitting
 
   return (
     <div className={styles.page}>
@@ -93,6 +121,17 @@ export default function NewAnalysisScreen({ onNavigate }: Props) {
             </Button>
           </div>
         </Column>
+
+        {error && (
+          <Column sm={4} md={8} lg={16}>
+            <InlineNotification
+              kind="error"
+              title="Analysis failed to start"
+              subtitle={error}
+              onClose={() => setError(null)}
+            />
+          </Column>
+        )}
 
         <Column sm={4} md={8} lg={10}>
           <Form>
@@ -208,10 +247,10 @@ export default function NewAnalysisScreen({ onNavigate }: Props) {
             <Button
               kind="primary"
               renderIcon={ArrowRight}
-              disabled={repoFiles.length === 0 || runbookFiles.length === 0}
+              disabled={!canSubmit}
               onClick={handleAnalyze}
             >
-              Analyze release
+              {submitting ? 'Starting…' : 'Analyze release'}
             </Button>
             <Button kind="ghost" renderIcon={Catalog} onClick={loadSample}>
               Load NorthRiver sample
