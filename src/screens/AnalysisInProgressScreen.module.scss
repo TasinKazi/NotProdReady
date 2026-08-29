@@ -40,6 +40,15 @@
   color: #198038;
 }
 
+.statusFailed {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #da1e28;
+}
+
 /* ── Tiles ─────────────────────────────────────────────────── */
 .agentTile,
 .evidenceTile {

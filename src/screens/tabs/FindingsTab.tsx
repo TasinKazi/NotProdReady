@@ -1,5 +1,5 @@
-import { Tag, Tile } from '@carbon/react'
-import { ErrorFilled, WarningFilled } from '@carbon/icons-react'
+import { Accordion, AccordionItem, Tag } from '@carbon/react'
+import { ErrorFilled, WarningFilled, CheckmarkFilled } from '@carbon/icons-react'
 import type { Finding } from '../../data/mockAnalysis'
 import styles from './FindingsTab.module.scss'
 
@@ -9,28 +9,32 @@ interface Props {
 
 function SeverityTag({ severity }: { severity: Finding['severity'] }) {
   if (severity === 'BLOCK') return <Tag type="red" size="sm">BLOCK</Tag>
-  if (severity === 'WARN') return <Tag type="warm-gray" size="sm">WARN</Tag>
+  if (severity === 'WARN')  return <Tag type="warm-gray" size="sm">WARN</Tag>
   return <Tag type="green" size="sm">PASS</Tag>
 }
 
 function SeverityIcon({ severity }: { severity: Finding['severity'] }) {
-  if (severity === 'BLOCK') return <ErrorFilled size={20} className={styles.iconBlock} />
-  if (severity === 'WARN') return <WarningFilled size={20} className={styles.iconWarn} />
-  return null
+  if (severity === 'BLOCK') return <ErrorFilled   size={16} className={styles.iconBlock} />
+  if (severity === 'WARN')  return <WarningFilled  size={16} className={styles.iconWarn} />
+  return                           <CheckmarkFilled size={16} className={styles.iconPass} />
 }
 
-function FindingCard({ finding }: { finding: Finding }) {
+/** The accordion title row: icon + title + tag + id */
+function FindingTitle({ finding }: { finding: Finding }) {
   return (
-    <Tile className={styles.card}>
-      {/* Card header */}
-      <div className={styles.cardHeader}>
-        <div className={styles.cardTitleRow}>
-          <SeverityIcon severity={finding.severity} />
-          <h3 className={styles.cardTitle}>{finding.title}</h3>
-          <SeverityTag severity={finding.severity} />
-          <span className={styles.findingId}>{finding.id}</span>
-        </div>
-      </div>
+    <span className={styles.accordionTitle}>
+      <SeverityIcon severity={finding.severity} />
+      <span className={styles.accordionTitleText}>{finding.title}</span>
+      <SeverityTag severity={finding.severity} />
+      <span className={styles.findingId}>{finding.id}</span>
+    </span>
+  )
+}
+
+/** Claim → Evidence → Risk → Recommendation body */
+function FindingBody({ finding }: { finding: Finding }) {
+  return (
+    <div className={styles.body}>
 
       {/* Claim: runbook vs repository */}
       {(finding.runbook || finding.repository) && (
@@ -52,17 +56,17 @@ function FindingCard({ finding }: { finding: Finding }) {
 
       {/* Missing env var */}
       {finding.missing && (
-        <div className={styles.missingBlock}>
-          <p className={styles.claimLabel}>Missing</p>
+        <div className={styles.fieldRow}>
+          <span className={styles.claimLabel}>Missing</span>
           <code className={styles.missingCode}>{finding.missing}</code>
         </div>
       )}
 
       {/* Migration */}
       {finding.migration && (
-        <div className={styles.missingBlock}>
-          <p className={styles.claimLabel}>Migration</p>
-          <code className={styles.missingCode}>{finding.migration}</code>
+        <div className={styles.fieldRow}>
+          <span className={styles.claimLabel}>Migration</span>
+          <code className={styles.migrationCode}>{finding.migration}</code>
         </div>
       )}
 
@@ -73,7 +77,7 @@ function FindingCard({ finding }: { finding: Finding }) {
           {finding.evidenceFile && (
             <code className={styles.evidenceFileInline}>{finding.evidenceFile}</code>
           )}
-          {' '}
+          {finding.evidenceFile ? '  ' : ''}
           {finding.evidence}
         </p>
       </div>
@@ -85,7 +89,51 @@ function FindingCard({ finding }: { finding: Finding }) {
           <p className={styles.recommendationText}>{finding.recommendation}</p>
         </div>
       )}
-    </Tile>
+
+    </div>
+  )
+}
+
+function FindingsSection({
+  label,
+  icon,
+  count,
+  findings,
+  open,
+}: {
+  label: string
+  icon: React.ReactNode
+  count: number
+  findings: Finding[]
+  open: boolean
+}) {
+  if (findings.length === 0) return null
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.sectionHeading}>
+        {icon}
+        {label}
+        <span className={styles.sectionCount}>({count})</span>
+      </h2>
+      <Accordion>
+        {findings.map((f) => (
+          <AccordionItem
+            key={f.id}
+            title={<FindingTitle finding={f} />}
+            open={open}
+            className={
+              f.severity === 'BLOCK'
+                ? styles.accordionItemBlock
+                : f.severity === 'WARN'
+                ? styles.accordionItemWarn
+                : styles.accordionItemPass
+            }
+          >
+            <FindingBody finding={f} />
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </section>
   )
 }
 
@@ -95,28 +143,20 @@ export default function FindingsTab({ findings }: Props) {
 
   return (
     <div className={styles.root}>
-      {blockers.length > 0 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionHeading}>
-            <ErrorFilled size={16} className={styles.iconBlock} />
-            Blockers <span className={styles.sectionCount}>({blockers.length})</span>
-          </h2>
-          <div className={styles.cardList}>
-            {blockers.map((f) => <FindingCard key={f.id} finding={f} />)}
-          </div>
-        </section>
-      )}
-      {warnings.length > 0 && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionHeading}>
-            <WarningFilled size={16} className={styles.iconWarn} />
-            Warnings <span className={styles.sectionCount}>({warnings.length})</span>
-          </h2>
-          <div className={styles.cardList}>
-            {warnings.map((f) => <FindingCard key={f.id} finding={f} />)}
-          </div>
-        </section>
-      )}
+      <FindingsSection
+        label="Blockers"
+        icon={<ErrorFilled size={16} className={styles.iconBlock} />}
+        count={blockers.length}
+        findings={blockers}
+        open={true}
+      />
+      <FindingsSection
+        label="Warnings"
+        icon={<WarningFilled size={16} className={styles.iconWarn} />}
+        count={warnings.length}
+        findings={warnings}
+        open={true}
+      />
     </div>
   )
 }

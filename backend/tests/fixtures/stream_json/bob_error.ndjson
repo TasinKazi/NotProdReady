@@ -1,0 +1,2 @@
+{"type":"error","error":"Workspace does not contain a valid repository structure.","timestamp":"2025-01-14T10:00:01Z"}
+{"type":"result","subtype":"error","stop_reason":"error","last_message":"","stats":{"task_id":"task-fail-001","total_tokens":120,"input_tokens":100,"output_tokens":20,"duration_ms":310,"session_costs":0.01,"tool_calls":0},"timestamp":"2025-01-14T10:00:02Z"}

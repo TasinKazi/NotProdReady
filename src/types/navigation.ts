@@ -3,6 +3,8 @@ export type ViewId =
   | 'new-analysis'
   | 'analysis-in-progress'
   | 'analysis-result'
+  | 'remediation-in-progress'
+  | 'remediation-result'
   | 'history'
   | 'policies'
   | 'integrations'

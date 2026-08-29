@@ -218,10 +218,12 @@ export default function AnalysisInProgressScreen({
   const [groups, setGroups] = useState<AgentGroup[]>(INITIAL_GROUPS)
   const [evidence, setEvidence] = useState<EvidenceEntry[]>([])
   const [finished, setFinished] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const [failureMessage, setFailureMessage] = useState<string | null>(null)
   const [sseError, setSseError] = useState<string | null>(null)
-  const [appName, setAppName] = useState<string>('NorthRiver Payments API')
-  const [releaseVer, setReleaseVer] = useState<string>('v2.4.0')
-  const [envName, setEnvName] = useState<string>('Production')
+  const [appName, setAppName] = useState<string>('')
+  const [releaseVer, setReleaseVer] = useState<string>('')
+  const [envName, setEnvName] = useState<string>('')
 
   // Mutable ref so the SSE handler always sees latest state
   const stateRef = useRef({ groups: INITIAL_GROUPS, evidence: [] as EvidenceEntry[] })
@@ -237,6 +239,16 @@ export default function AnalysisInProgressScreen({
           if (d.application_name) setAppName(d.application_name)
           if (d.release_version) setReleaseVer(d.release_version)
           if (d.environment) setEnvName(d.environment)
+        }
+
+        // Handle analysis failure — stop spinner, show error, expose retry CTA
+        if (msg.event === 'analysis.failed') {
+          const d = msg.data as Record<string, string>
+          const msg_text = d.error || 'Analysis failed. Check server logs for details.'
+          setFailureMessage(msg_text)
+          setFailed(true)
+          setFinished(true)
+          return
         }
 
         const next = applySSEMessage(
@@ -283,27 +295,42 @@ export default function AnalysisInProgressScreen({
         <Column sm={4} md={8} lg={16}>
           <div className={styles.titleRow}>
             <div>
-              <h1 className={styles.heading}>Analyzing {appName}</h1>
+              <h1 className={styles.heading}>
+                {appName ? `Analyzing ${appName}` : 'Preparing analysis\u2026'}
+              </h1>
               <div className={styles.releaseMeta}>
-                <Tag type="cool-gray" size="md">{releaseVer}</Tag>
-                <Tag type="cool-gray" size="md">{envName}</Tag>
+                {releaseVer && <Tag type="cool-gray" size="md">{releaseVer}</Tag>}
+                {envName && <Tag type="cool-gray" size="md">{envName}</Tag>}
               </div>
             </div>
           </div>
           <div className={styles.statusBar}>
-            {finished ? (
-              <div className={styles.statusDone}>
-                <CheckmarkFilled size={20} className={styles.iconDone} />
-                <span>Analysis complete — reviewing results</span>
-              </div>
-            ) : (
+            {finished && failed ? (
+                <div className={styles.statusFailed}>
+                  <span>Analysis failed</span>
+                </div>
+              ) : finished ? (
+                <div className={styles.statusDone}>
+                  <CheckmarkFilled size={20} className={styles.iconDone} />
+                  <span>Analysis complete — reviewing results</span>
+                </div>
+              ) : (
               <InlineLoading
                 description="IBM Bob is validating release readiness"
                 status="active"
               />
             )}
           </div>
-          {sseError && (
+          {failed && failureMessage && (
+            <InlineNotification
+              kind="error"
+              title="Analysis failed"
+              subtitle={failureMessage}
+              lowContrast
+              hideCloseButton
+            />
+          )}
+          {sseError && !failed && (
             <InlineNotification
               kind="warning"
               title="Connection warning"
@@ -386,9 +413,15 @@ export default function AnalysisInProgressScreen({
         {finished && (
           <Column sm={4} md={8} lg={16}>
             <div className={styles.ctaRow}>
-              <Button kind="primary" onClick={handleViewResults}>
-                View results
-              </Button>
+              {failed ? (
+                <Button kind="secondary" onClick={() => onNavigate('new-analysis')}>
+                  Try again
+                </Button>
+              ) : (
+                <Button kind="primary" onClick={handleViewResults}>
+                  View results
+                </Button>
+              )}
             </div>
           </Column>
         )}

@@ -1,0 +1,302 @@
+.page {
+  padding: 0 0 4rem;
+  min-height: 100vh;
+  background: #f4f4f4;
+}
+
+.headerBand {
+  background: #161616;
+  padding: 1.5rem 0;
+  color: #ffffff;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  color: #a8a8a8;
+  margin: 0 0 0.5rem;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.appName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.sep {
+  color: #6f6f6f;
+}
+
+.summaryBand {
+  background: #defbe6;
+  border-bottom: 1px solid #a7f0ba;
+  padding: 1.5rem 0;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.iconSuccess {
+  color: #24a148;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.summaryHeading {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #198038;
+  margin: 0 0 0.25rem;
+}
+
+.summarySub {
+  font-size: 0.875rem;
+  color: #198038;
+  margin: 0;
+}
+
+.summaryStats {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.statNumber {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #198038;
+}
+
+.statNumberWarn {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #8a3800;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  color: #525252;
+}
+
+.statSep {
+  width: 1px;
+  height: 2rem;
+  background: #a7f0ba;
+}
+
+.actionsBar {
+  background: #f4f4f4;
+  padding: 1rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.revalError {
+  color: #da1e28;
+  font-size: 0.8125rem;
+  margin-top: 0.5rem;
+}
+
+.contentGrid {
+  margin-top: 1.5rem;
+}
+
+.tile {
+  background: #ffffff;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.tileTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #525252;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tileSubtitle {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #525252;
+  margin: 1rem 0 0.5rem;
+}
+
+.emptyMsg {
+  font-size: 0.875rem;
+  color: #8d8d8d;
+  margin: 0;
+}
+
+.fileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.fileIcon {
+  color: #525252;
+  flex-shrink: 0;
+}
+
+.filePath {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: #161616;
+  flex: 1;
+  word-break: break-all;
+}
+
+.findingList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.findingItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+}
+
+.findingItemWarn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+}
+
+.iconOk {
+  color: #24a148;
+}
+
+.iconWarn {
+  color: #f1c21b;
+}
+
+.notes {
+  font-size: 0.8125rem;
+  color: #525252;
+  margin: 0.75rem 0 0;
+  border-left: 3px solid #e0e0e0;
+  padding-left: 0.75rem;
+}
+
+/* Before / after comparison */
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 671px) {
+  .comparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+.comparisonBefore,
+.comparisonAfter {
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 2px;
+  background: #f4f4f4;
+}
+
+.comparisonAfterPending {
+  padding: 1rem;
+  border: 1px dashed #c6c6c6;
+  border-radius: 2px;
+  background: #f9f9f9;
+}
+
+.compLabel {
+  font-size: 0.75rem;
+  color: #525252;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compLabelPending {
+  font-size: 0.75rem;
+  color: #8d8d8d;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.compDecision {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.noGo {
+  color: #da1e28;
+}
+
+.go {
+  color: #24a148;
+}
+
+.compScore {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #161616;
+  margin: 0.25rem 0;
+}
+
+.compCounts {
+  font-size: 0.8125rem;
+  color: #525252;
+  margin: 0;
+}
+
+.compPending {
+  font-size: 0.875rem;
+  color: #6f6f6f;
+  margin: 0 0 1rem;
+}

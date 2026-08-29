@@ -1,0 +1,153 @@
+.page {
+  padding: 2rem 0 4rem;
+  min-height: 100vh;
+  background: #f4f4f4;
+}
+
+.titleRow {
+  margin-bottom: 1.5rem;
+}
+
+.heading {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 0.5rem;
+}
+
+.releaseMeta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.statusBar {
+  margin-bottom: 1rem;
+}
+
+.statusDone {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #24a148;
+}
+
+.statusFailed {
+  font-size: 0.875rem;
+  color: #da1e28;
+}
+
+.iconDone {
+  color: #24a148;
+}
+
+.iconActive {
+  color: #0f62fe;
+}
+
+.iconWaiting {
+  color: #8d8d8d;
+}
+
+.stepsTile {
+  padding: 1.25rem;
+  background: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.filesTile {
+  padding: 1.25rem;
+  background: #ffffff;
+  margin-bottom: 1rem;
+}
+
+.tileTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #525252;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stepList {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.stepLoading {
+  margin-left: auto;
+}
+
+.stepDone {
+  color: #161616;
+}
+
+.stepActive {
+  color: #0f62fe;
+  font-weight: 500;
+}
+
+.stepWaiting {
+  color: #8d8d8d;
+}
+
+.currentDetail {
+  font-size: 0.8125rem;
+  color: #6f6f6f;
+  margin: 0;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 0.75rem;
+}
+
+.filesEmpty {
+  font-size: 0.8125rem;
+  color: #8d8d8d;
+  margin: 0;
+}
+
+.fileList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.fileIcon {
+  color: #525252;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.75rem;
+  color: #161616;
+  word-break: break-all;
+}
+
+.ctaRow {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+}

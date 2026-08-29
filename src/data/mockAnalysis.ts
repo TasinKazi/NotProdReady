@@ -51,6 +51,7 @@ export const mockAnalysis: MockAnalysis = {
   readiness: { score: 61 },
   summary: { blockers: 3, warnings: 1, passed: 8 },
   findings: [
+    // ── Blockers ─────────────────────────────────────────────
     {
       id: 'F-001',
       title: 'Runtime compatibility',
@@ -79,6 +80,7 @@ export const mockAnalysis: MockAnalysis = {
         'Referenced in src/services/paymentService.js but absent from .env.example and deployment runbook.',
       evidenceFile: 'src/services/paymentService.js',
     },
+    // ── Warnings ─────────────────────────────────────────────
     {
       id: 'F-004',
       title: 'Rollback readiness',
@@ -86,6 +88,61 @@ export const mockAnalysis: MockAnalysis = {
       migration: 'migrations/002_add_payment_status.sql',
       evidence: 'No rollback artifact found.',
       evidenceFile: 'migrations/002_add_payment_status.sql',
+    },
+    // ── Passed ───────────────────────────────────────────────
+    {
+      id: 'P-001',
+      title: 'Health-check endpoint responding',
+      severity: 'PASS',
+      evidence: 'GET /health returned 200 OK.',
+      evidenceFile: 'src/routes/health.js',
+    },
+    {
+      id: 'P-002',
+      title: 'OpenAPI specification present and parseable',
+      severity: 'PASS',
+      evidence: 'openapi.yaml parsed without errors.',
+      evidenceFile: 'openapi.yaml',
+    },
+    {
+      id: 'P-003',
+      title: 'Dockerfile present',
+      severity: 'PASS',
+      evidence: 'Dockerfile found at repository root.',
+      evidenceFile: 'Dockerfile',
+    },
+    {
+      id: 'P-004',
+      title: '.dockerignore present',
+      severity: 'PASS',
+      evidence: '.dockerignore found at repository root.',
+      evidenceFile: '.dockerignore',
+    },
+    {
+      id: 'P-005',
+      title: 'CI workflow present',
+      severity: 'PASS',
+      evidence: '.github/workflows/deploy.yml found and parseable.',
+      evidenceFile: '.github/workflows/deploy.yml',
+    },
+    {
+      id: 'P-006',
+      title: 'Dependency audit — no critical CVEs',
+      severity: 'PASS',
+      evidence: 'npm audit returned 0 critical vulnerabilities.',
+    },
+    {
+      id: 'P-007',
+      title: 'Secrets scan — no hardcoded credentials',
+      severity: 'PASS',
+      evidence: 'No hardcoded API keys, passwords, or tokens detected.',
+    },
+    {
+      id: 'P-008',
+      title: 'README present',
+      severity: 'PASS',
+      evidence: 'README.md found at repository root.',
+      evidenceFile: 'README.md',
     },
   ],
   agentActivity: [

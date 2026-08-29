@@ -27,12 +27,24 @@ router = APIRouter(prefix="/api/analyses", tags=["analyses"])
 
 
 def _get_runner() -> BobRunner:
+    """Select runner based on NOTPRODREADY_BOB_MODE.
+
+    mock  — MockBobRunner (default): deterministic NorthRiver demo, no AI cost.
+    shell — BobShellRunner: invokes IBM Bob Shell as a subprocess.
+
+    Any other value raises ValueError immediately — no silent fallback to mock.
+    """
     mode = os.environ.get("NOTPRODREADY_BOB_MODE", "mock").lower()
     if mode == "mock":
         from app.runners.mock import MockBobRunner
         return MockBobRunner()
-    # Step 9: add BobShellRunner here
-    raise ValueError(f"Unknown BOB_MODE: {mode}")
+    if mode == "shell":
+        from app.runners.shell import BobShellRunner
+        return BobShellRunner()
+    raise ValueError(
+        f"Unknown NOTPRODREADY_BOB_MODE: '{mode}'. "
+        "Valid values: 'mock' (default), 'shell'."
+    )
 
 
 # ── Background task ───────────────────────────────────────────────────────────
@@ -46,6 +58,15 @@ async def _run_analysis(analysis: Analysis) -> None:
 
     try:
         svc.update_status(analysis.analysis_id, AnalysisStatus.PREPARING)
+
+        # Copy the project-level .bob/ configuration into the workspace so
+        # BobShellRunner can invoke the NotProdReady skill.  This is a no-op
+        # for MockBobRunner (which never reads .bob/) but is required for shell
+        # mode.  We copy for both modes so the workspace structure is identical
+        # in all cases and failures surface early rather than at Bob invocation.
+        from app.runners.shell import BobShellRunner as _BSR
+        if isinstance(runner, _BSR):
+            svc.copy_bob_config_to_workspace(workspace)
 
         async def emit(event: AnalysisEvent) -> None:
             await svc.publish(analysis.analysis_id, event)
@@ -69,7 +90,9 @@ async def _run_analysis(analysis: Analysis) -> None:
             AnalysisEvent(event="__done__", data={}, sequence=-1),
         )
     except Exception as exc:  # noqa: BLE001
-        error_msg = str(exc)
+        # str(exc) can be empty for bare exception subclasses — fall back to
+        # the class name so Analysis.error is never an empty string.
+        error_msg = str(exc) or type(exc).__name__
         svc.store_error(analysis.analysis_id, error_msg)
         await svc.publish(
             analysis.analysis_id,
@@ -130,6 +153,17 @@ async def create_analysis(
         runbook_bytes = await deployment_runbook.read()
         runbook_name = deployment_runbook.filename or "runbook"
         (workspace / "documents" / runbook_name).write_bytes(runbook_bytes)
+
+    # Load NorthRiver sample files when no real files were uploaded
+    if use_sample and repository is None and deployment_runbook is None:
+        try:
+            svc.load_northriver_sample(workspace)
+        except FileNotFoundError as exc:
+            svc.cleanup_workspace(analysis.analysis_id)
+            raise HTTPException(
+                status_code=500,
+                detail=f"Sample fixture unavailable: {exc}",
+            ) from exc
 
     background_tasks.add_task(_run_analysis, analysis)
 

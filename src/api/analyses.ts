@@ -7,6 +7,8 @@ import type {
   AnalysisCreatedResponse,
   AnalysisStatusResponse,
   ApiReleaseResult,
+  RemediationCreatedResponse,
+  RemediationStatusResponse,
   SseMessage,
 } from './types'
 
@@ -123,4 +125,87 @@ export function subscribeToEvents(
   }
 
   return () => es.close()
+}
+
+// ── Remediation ───────────────────────────────────────────────────────────────
+
+/**
+ * POST /api/analyses/{analysis_id}/remediate
+ *
+ * Starts a remediation job for a completed NO-GO analysis.
+ */
+export async function startRemediation(
+  analysisId: string,
+): Promise<RemediationCreatedResponse> {
+  const res = await fetch(`${BASE_URL}/api/analyses/${analysisId}/remediate`, {
+    method: 'POST',
+  })
+  return handleResponse<RemediationCreatedResponse>(res)
+}
+
+/**
+ * GET /api/analyses/{analysis_id}/remediation
+ */
+export async function getRemediationStatus(
+  analysisId: string,
+): Promise<RemediationStatusResponse> {
+  const res = await fetch(`${BASE_URL}/api/analyses/${analysisId}/remediation`)
+  return handleResponse<RemediationStatusResponse>(res)
+}
+
+/**
+ * GET /api/analyses/{analysis_id}/remediation/events  (SSE)
+ */
+export function subscribeToRemediationEvents(
+  analysisId: string,
+  callbacks: {
+    onMessage: (msg: SseMessage) => void
+    onDone: () => void
+    onError: (err: string) => void
+  },
+): () => void {
+  const url = `${BASE_URL}/api/analyses/${analysisId}/remediation/events`
+  const es = new EventSource(url)
+
+  es.addEventListener('message', (e) => {
+    try {
+      const parsed = JSON.parse(e.data) as SseMessage
+      callbacks.onMessage(parsed)
+    } catch {
+      callbacks.onError('Failed to parse SSE message')
+    }
+  })
+
+  es.addEventListener('done', () => {
+    es.close()
+    callbacks.onDone()
+  })
+
+  es.onerror = () => {
+    es.close()
+    callbacks.onError('SSE connection error')
+  }
+
+  return () => es.close()
+}
+
+/**
+ * POST /api/analyses/{analysis_id}/revalidate
+ *
+ * Starts a new readiness analysis against the remediated workspace.
+ */
+export async function startRevalidation(
+  analysisId: string,
+): Promise<AnalysisCreatedResponse> {
+  const res = await fetch(`${BASE_URL}/api/analyses/${analysisId}/revalidate`, {
+    method: 'POST',
+  })
+  return handleResponse<AnalysisCreatedResponse>(res)
+}
+
+/**
+ * GET /api/analyses/{analysis_id}/remediation/download
+ */
+export function getRemediationDownloadUrl(analysisId: string): string {
+  return `${BASE_URL}/api/analyses/${analysisId}/remediation/download`
 }

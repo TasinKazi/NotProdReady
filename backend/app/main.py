@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analyses import router as analyses_router
+from app.api.remediation import router as remediation_router
 
 app = FastAPI(
     title="NotProdReady API",
@@ -18,7 +19,15 @@ app = FastAPI(
 # Allow the Vite dev server (and any configured origin) during local development.
 _CORS_ORIGINS = os.environ.get(
     "NOTPRODREADY_CORS_ORIGINS",
-    "http://localhost:5173,http://localhost:4173",
+    ",".join([
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+        "http://localhost:4173",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:5174",
+        "http://127.0.0.1:5175",
+    ]),
 ).split(",")
 
 app.add_middleware(
@@ -41,3 +50,4 @@ async def health() -> dict:
 # ── Routers ───────────────────────────────────────────────────────────────────
 
 app.include_router(analyses_router)
+app.include_router(remediation_router)

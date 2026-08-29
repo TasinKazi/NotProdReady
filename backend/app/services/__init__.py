@@ -1,10 +1,12 @@
-"""Re-export the analyses service functions."""
+"""Re-export the analyses service functions and module-level state dicts."""
 from app.services.analyses import (  # noqa: F401
     create_analysis,
+    copy_bob_config_to_workspace,
     create_workspace,
     get_analysis,
     get_result,
     get_workspace,
+    load_northriver_sample,
     publish,
     store_error,
     store_result,
@@ -13,4 +15,27 @@ from app.services.analyses import (  # noqa: F401
     update_status,
     extract_zip_safely,
     cleanup_workspace,
+    # Module-level dicts — exposed for tests that need to pre-populate state.
+    _analyses,
+    _event_queues,
+)
+from app.services.remediation import (  # noqa: F401
+    create_remediation,
+    get_remediation,
+    get_remediation_for_analysis,
+    update_remediation_status,
+    store_remediation_result,
+    store_remediation_error,
+    set_revalidation_analysis_id,
+    subscribe_remediation,
+    unsubscribe_remediation,
+    publish_remediation,
+    snapshot_repository,
+    compute_repository_changes,
+    package_remediated_repository,
+    create_remediation_dir,
+    get_remediation_workspace,
+    # Module-level dicts — exposed for tests
+    _remediations,
+    _remediation_queues,
 )

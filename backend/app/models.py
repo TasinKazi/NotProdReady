@@ -20,6 +20,15 @@ class AnalysisStatus(str, Enum):
     FAILED = "FAILED"
 
 
+class RemediationStatus(str, Enum):
+    QUEUED = "QUEUED"
+    SNAPSHOTTING = "SNAPSHOTTING"
+    REMEDIATING = "REMEDIATING"
+    AUDITING = "AUDITING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
 class FindingSeverity(str, Enum):
     PASS = "PASS"
     WARN = "WARN"
@@ -125,6 +134,41 @@ class ReleaseResult(BaseModel):
     support_message: Optional[str] = None
 
 
+# ── Remediation models ────────────────────────────────────────────────────────
+
+
+class FileChangeType(str, Enum):
+    MODIFIED = "modified"
+    CREATED = "created"
+    DELETED = "deleted"
+
+
+class FileChange(BaseModel):
+    path: str
+    change_type: FileChangeType
+
+
+class RemediationResult(BaseModel):
+    """Structured output from the Bob remediation turn."""
+    status: str                       # e.g. "completed", "partial", "failed"
+    summary: str
+    files_changed: list[FileChange]
+    findings_addressed: list[str]     # finding IDs
+    findings_not_addressed: list[str]
+    notes: Optional[str] = None
+
+
+class Remediation(BaseModel):
+    remediation_id: str
+    analysis_id: str                  # original analysis
+    status: RemediationStatus = RemediationStatus.QUEUED
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    result: Optional[RemediationResult] = None
+    error: Optional[str] = None
+    # IDs for the revalidation analysis (populated after Re-run analysis)
+    revalidation_analysis_id: Optional[str] = None
+
+
 # ── Analysis (in-memory record) ───────────────────────────────────────────────
 
 
@@ -138,6 +182,12 @@ class Analysis(BaseModel):
     workspace_path: Optional[str] = None
     result: Optional[ReleaseResult] = None
     error: Optional[str] = None
+    # Populated by BobShellRunner when Bob returns a task/session ID.
+    bob_session_id: Optional[str] = None
+    bob_task_id: Optional[str] = None
+    # If this is a revalidation, the originating remediation_id
+    original_analysis_id: Optional[str] = None
+    remediation_id: Optional[str] = None
 
 
 # ── API request / response ────────────────────────────────────────────────────
@@ -156,6 +206,22 @@ class AnalysisStatusResponse(BaseModel):
     status: AnalysisStatus
     created_at: datetime
     error: Optional[str] = None
+
+
+class RemediationCreatedResponse(BaseModel):
+    remediation_id: str
+    analysis_id: str
+    status: RemediationStatus
+
+
+class RemediationStatusResponse(BaseModel):
+    remediation_id: str
+    analysis_id: str
+    status: RemediationStatus
+    created_at: datetime
+    error: Optional[str] = None
+    result: Optional[RemediationResult] = None
+    revalidation_analysis_id: Optional[str] = None
 
 
 # ── SSE event ─────────────────────────────────────────────────────────────────

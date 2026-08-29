@@ -82,6 +82,46 @@ export interface ApiReleaseResult {
   support_message?: string
 }
 
+export type RemediationStatus =
+  | 'QUEUED'
+  | 'SNAPSHOTTING'
+  | 'REMEDIATING'
+  | 'AUDITING'
+  | 'COMPLETED'
+  | 'FAILED'
+
+export type FileChangeType = 'modified' | 'created' | 'deleted'
+
+export interface ApiFileChange {
+  path: string
+  change_type: FileChangeType
+}
+
+export interface ApiRemediationResult {
+  status: string
+  summary: string
+  files_changed: ApiFileChange[]
+  findings_addressed: string[]
+  findings_not_addressed: string[]
+  notes?: string
+}
+
+export interface RemediationCreatedResponse {
+  remediation_id: string
+  analysis_id: string
+  status: RemediationStatus
+}
+
+export interface RemediationStatusResponse {
+  remediation_id: string
+  analysis_id: string
+  status: RemediationStatus
+  created_at: string
+  error?: string
+  result?: ApiRemediationResult
+  revalidation_analysis_id?: string
+}
+
 export interface AnalysisCreatedResponse {
   analysis_id: string
   status: AnalysisStatus

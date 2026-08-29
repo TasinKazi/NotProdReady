@@ -11,39 +11,30 @@ interface Props {
   data: MockAnalysis
 }
 
-const PASSED_CHECKS = [
-  'Health-check endpoint responding (GET /health)',
-  'OpenAPI spec present and parseable',
-  'Dockerfile present',
-  '.dockerignore present',
-  'CI workflow present (.github/workflows/deploy.yml)',
-  'Dependency audit — no critical CVEs',
-  'Secrets scan — no hardcoded credentials detected',
-  'README present',
-]
-
 export default function OverviewTab({ data }: Props) {
   const { summary, findings } = data
   const blockers = findings.filter((f) => f.severity === 'BLOCK')
   const warnings = findings.filter((f) => f.severity === 'WARN')
+  const passed   = findings.filter((f) => f.severity === 'PASS')
 
   return (
     <div className={styles.root}>
       <Grid narrow>
-        {/* Summary counts */}
+
+        {/* ── Summary counts ─────────────────────────────────── */}
         <Column sm={4} md={8} lg={16}>
           <div className={styles.summaryRow}>
-            <div className={styles.summaryCard}>
+            <div className={`${styles.summaryCard} ${styles.summaryCardBlock}`}>
               <ErrorFilled size={20} className={styles.iconBlock} />
               <span className={styles.summaryCount}>{summary.blockers}</span>
               <span className={styles.summaryLabel}>Blockers</span>
             </div>
-            <div className={styles.summaryCard}>
+            <div className={`${styles.summaryCard} ${styles.summaryCardWarn}`}>
               <WarningFilled size={20} className={styles.iconWarn} />
               <span className={styles.summaryCount}>{summary.warnings}</span>
               <span className={styles.summaryLabel}>Warnings</span>
             </div>
-            <div className={styles.summaryCard}>
+            <div className={`${styles.summaryCard} ${styles.summaryCardPass}`}>
               <CheckmarkFilled size={20} className={styles.iconPass} />
               <span className={styles.summaryCount}>{summary.passed}</span>
               <span className={styles.summaryLabel}>Passed</span>
@@ -51,7 +42,7 @@ export default function OverviewTab({ data }: Props) {
           </div>
         </Column>
 
-        {/* Blockers quick list */}
+        {/* ── Blockers list ───────────────────────────────────── */}
         {blockers.length > 0 && (
           <Column sm={4} md={8} lg={16}>
             <Tile className={styles.section}>
@@ -73,7 +64,7 @@ export default function OverviewTab({ data }: Props) {
           </Column>
         )}
 
-        {/* Warnings quick list */}
+        {/* ── Warnings list ───────────────────────────────────── */}
         {warnings.length > 0 && (
           <Column sm={4} md={8} lg={16}>
             <Tile className={styles.section}>
@@ -95,22 +86,28 @@ export default function OverviewTab({ data }: Props) {
           </Column>
         )}
 
-        {/* Passed checks */}
-        <Column sm={4} md={8} lg={16}>
-          <Tile className={styles.section}>
-            <h3 className={styles.sectionTitle}>
-              <CheckmarkFilled size={16} className={styles.iconPass} /> Passed checks
-            </h3>
-            <ul className={styles.findingList}>
-              {PASSED_CHECKS.map((check) => (
-                <li key={check} className={styles.findingItem}>
-                  <Tag type="green" size="sm">PASS</Tag>
-                  <span className={styles.findingTitle}>{check}</span>
-                </li>
-              ))}
-            </ul>
-          </Tile>
-        </Column>
+        {/* ── Passed checks ───────────────────────────────────── */}
+        {passed.length > 0 && (
+          <Column sm={4} md={8} lg={16}>
+            <Tile className={styles.section}>
+              <h3 className={styles.sectionTitle}>
+                <CheckmarkFilled size={16} className={styles.iconPass} /> Passed checks
+              </h3>
+              <ul className={styles.findingList}>
+                {passed.map((f) => (
+                  <li key={f.id} className={styles.findingItem}>
+                    <Tag type="green" size="sm">PASS</Tag>
+                    <span className={styles.findingTitle}>{f.title}</span>
+                    {f.evidenceFile && (
+                      <code className={styles.evidenceFile}>{f.evidenceFile}</code>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </Tile>
+          </Column>
+        )}
+
       </Grid>
     </div>
   )
