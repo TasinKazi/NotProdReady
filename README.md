@@ -6,7 +6,7 @@
 
 Built for the **IBM Dev Day Hackathon (August 2026 / Developer Productivity with IBM Bob 2.0).**
 
-[Watch the 3-minute demo](ADD_NOTPRODREADY_VIDEO_LINK_HERE) · [Try the live demo](https://notprodready.onrender.com/) · [Judge's Quick Guide](./JUDGE.md)
+[Watch the 3-minute demo](youtube.com) · [Try the live demo](https://notprodready.onrender.com/) · [Judge's Quick Guide](./JUDGE.md)
 
 ---
 
