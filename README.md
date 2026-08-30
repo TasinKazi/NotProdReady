@@ -261,3 +261,9 @@ For a confirmed NO-GO result:
 | [Docker](https://www.docker.com/) | Reproducible application packaging with IBM Bob and backend dependencies |
 | [Render](https://render.com/) | Hosting for the publicly accessible NotProdReady application |
 | [Pytest](https://pytest.org/) | Automated testing for the API, Bob integration, result validation, workspace isolation, and remediation workflow |
+
+## License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+Copyright © 2026 Kazi Tasin and Kazi Rahimu Islam.
