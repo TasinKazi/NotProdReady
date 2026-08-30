@@ -14,7 +14,7 @@ Built for the **IBM Dev Day Hackathon (August 2026 / Developer Productivity with
 
 Production deployment failures often begin with a dangerous assumption: that the deployment documentation still describes the application being released.
 
-According to [IBM’s Bendigo and Adelaide Bank case study](https://www.ibm.com/case-studies/bendigo-adelaide-bank), the bank experienced process bloat, extensive manual intervention, and difficulty delivering applications quickly enough to meet customer expectations. New application environments typically required five weeks to deliver, while thousands of spreadsheets were used to manage processes across the organization.
+According to [IBM’s Bendigo and Adelaide Bank case study](https://www.ibm.com/case-studies/bendigo-adelaide-bank), the bank experienced process bloat, extensive manual intervention, and difficulty delivering applications quickly enough to meet customer expectations. New application environments typically required 5 weeks to deliver, while thousands of spreadsheets were used to manage processes across the organization.
 
 [IBM also reports that Daimler Trucks North America relied on a manual deployment document containing more than 30 steps](https://www.ibm.com/case-studies/daimler-trucks-north-america). Deployments required 60–90 minutes, there was no clear automated rollback path, and limited source-control traceability increased the possibility of deployment errors.
 
