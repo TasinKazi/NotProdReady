@@ -1,4 +1,4 @@
-![NotProdReady Banner](./public/notprodready-banner.png)
+![NotProdReady Banner](./docs/assets/notprodready-banner.png)
 
 # NOTPRODREADY
 
