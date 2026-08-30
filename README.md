@@ -31,6 +31,76 @@ The workflow produces a structured `ReleaseResult` containing a readiness score,
 For a **NO-GO** result, the developer can select **Ask Bob to remediate**. IBM Bob receives write access only to an isolated copy of the uploaded repository, applies targeted corrections to confirmed findings, and records every file that was created, modified, or deleted. The original repository and original analysis remain unchanged. After reviewing the audited change set, the developer downloads the remediated repository as a ZIP archive.
 
 NotProdReady replaces a manual, trust-based deployment checklist with an evidence-driven IBM Bob workflow that helps engineering teams identify production risk before production does.
+## How IBM Bob Was Used
+
+IBM Bob was used in two fundamental ways: as the development partner that helped build NotProdReady and as the agentic runtime that powers the product itself.
+
+### 1. IBM Bob as the development partner
+
+Kazi Tasin used **IBM Bob 2.0** throughout the project’s development. Bob contributed directly to the application rather than being used only for ideation or documentation.
+
+Bob assisted with:
+
+- Building and refining the React and IBM Carbon user interface
+- Creating the release results, evidence, findings, and agent-activity views
+- Implementing the FastAPI analysis backend and Server-Sent Events pipeline
+- Integrating the application with IBM Bob Shell and the IBM Bob API
+- Creating the custom **`$not-prod-ready` Bob-native Skill**
+- Creating the Runbook Analyst, Repository Inspector, and Release Verifier agents
+- Defining and validating the structured `ReleaseResult` contract
+- Stabilizing real Bob task execution and final-result generation
+- Implementing the remediation and revalidation workflow
+- Debugging authentication, routing, analysis-progress, and end-to-end workflow regressions
+- Running builds, backend tests, integration checks, and zero-Bobcoin preflight validation
+
+Bob also created and used the project-level **`design-advisor` MCP server** to obtain additional IBM Carbon and React interface feedback during development.
+
+The exported IBM Bob task sessions are included in [`bob_sessions/`](./bob_sessions/):
+
+| Session | IBM Bob contribution |
+|---|---|
+| [`01-overhaul-carbon-ui-ux.md`](./bob_sessions/01-overhaul-carbon-ui-ux.md) | Complete product-wide IBM Carbon UI/UX overhaul |
+| [`02-refine-enterprise-ui-workflow.md`](./bob_sessions/02-refine-enterprise-ui-workflow.md) | Enterprise UI refinement, design-advisor MCP work, and end-to-end workflow fixes |
+| [`03-build-real-bob-analysis-pipeline.md`](./bob_sessions/03-build-real-bob-analysis-pipeline.md) | Release results UI, FastAPI backend, SSE pipeline, real Bob integration, Skills, agents, and validation |
+| [`04-build-remediation-revalidation.md`](./bob_sessions/04-build-remediation-revalidation.md) | Reliable finalization, Bob-powered remediation, revalidation, change auditing, and automated testing |
+
+### 2. IBM Bob as the product runtime
+
+IBM Bob is also the core intelligence and execution engine inside NotProdReady.
+
+When a developer uploads a repository and deployment runbook, NotProdReady:
+
+1. Creates an isolated analysis workspace.
+2. Copies the custom Bob Skill and agent definitions into that workspace.
+3. Invokes IBM Bob through Bob Shell, authenticated at runtime with `BOB_API_KEY`.
+4. Activates the custom **`$not-prod-ready` Skill**.
+5. Coordinates the Runbook Analyst, Repository Inspector, and Release Verifier agents.
+6. Streams Bob’s live activity to the frontend.
+7. Produces a structured `ReleaseResult`.
+8. Validates the result before displaying a GO or NO-GO decision.
+
+For a NO-GO result, IBM Bob can resume the existing analysis context and apply targeted corrections to an isolated copy of the uploaded repository. NotProdReady then audits every created, modified, or deleted file and packages the remediated repository for download.
+
+### Bob’s role in the multi-agent workflow
+
+| IBM Bob component | Role in NotProdReady |
+|---|---|
+| **Main IBM Bob Agent** | Orchestrates the complete release-readiness workflow and produces the final decision |
+| **`$not-prod-ready` Skill** | Defines the workflow phases, safety restrictions, scoring rules, and output contract |
+| **Runbook Analyst Agent** | Extracts deployment requirements from the runbook |
+| **Repository Inspector Agent** | Finds repository evidence corresponding to each runbook requirement |
+| **Release Verifier Agent** | Independently verifies proposed blockers and warnings |
+| **Bob finalization fallback** | Resumes the same Bob task when a valid final `ReleaseResult` was not emitted |
+| **Bob remediation workflow** | Applies approved fixes to the isolated repository copy |
+| **Bob task-session exports** | Provide auditable evidence showing how Bob contributed during development |
+
+### Safety boundaries
+
+During release analysis, IBM Bob receives read-only access to the uploaded deployment documentation and repository. The only permitted analysis write is:
+
+```text
+output/release-result.json
+```
 
 ## How it works
 
