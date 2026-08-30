@@ -243,3 +243,21 @@ For a confirmed NO-GO result:
 | Bob-native Skill | [`.bob/skills/not-prod-ready/SKILL.md`](./.bob/skills/not-prod-ready/SKILL.md) |
 | Specialized IBM Bob agents | [`.bob/agents/`](./.bob/agents/) |
 | ReleaseResult output contract | [`.bob/skills/not-prod-ready/output-contract.md`](./.bob/skills/not-prod-ready/output-contract.md) |
+
+## Built with
+
+| Component | Role |
+|---|---|
+| [IBM Bob API](https://bob.ibm.com/) | Core agent runtime for release analysis, multi-agent orchestration, structured evidence generation, and repository remediation |
+| **IBM Bob-native Skills and Agents** | Custom `$not-prod-ready` Skill coordinating the Runbook Analyst, Repository Inspector, and Release Verifier agents |
+| [Model Context Protocol](https://modelcontextprotocol.io/) | Custom `design-advisor` MCP server for IBM Carbon and React interface development |
+| [IBM Carbon Design System](https://carbondesignsystem.com/) | Accessible enterprise UI components, icons, navigation, forms, progress views, and result interfaces |
+| [React 18](https://react.dev/) | Component-based frontend application and interactive release-readiness workflow |
+| [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vite.dev/) | Type-safe frontend development, bundling, and optimized production builds |
+| [FastAPI](https://fastapi.tiangolo.com/) | Analysis, result, remediation, event-streaming, and repository-download API |
+| [Pydantic v2](https://docs.pydantic.dev/latest/) | Validation of analysis requests, IBM Bob events, and the structured `ReleaseResult` |
+| [Python](https://www.python.org/) + [Uvicorn](https://www.uvicorn.org/) | Backend services and ASGI production runtime |
+| [Server-Sent Events](https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events) | Real-time delivery of IBM Bob analysis and remediation activity to the browser |
+| [Docker](https://www.docker.com/) | Reproducible application packaging with IBM Bob and backend dependencies |
+| [Render](https://render.com/) | Hosting for the publicly accessible NotProdReady application |
+| [Pytest](https://pytest.org/) | Automated testing for the API, Bob integration, result validation, workspace isolation, and remediation workflow |
