@@ -1,2 +1,0 @@
-[design-advisor] WARNING: No API keys configured. Set ANTHROPIC_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY in .bob/mcp.json env block.
-[design-advisor] MCP server running on stdio
