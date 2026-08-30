@@ -77,6 +77,7 @@ export default function HistoryScreen({ onNavigate }: Props) {
     listAnalyses()
       .then((data) => {
         if (cancelled) return
+
         setAnalyses(data)
         setLoading(false)
       })
@@ -220,9 +221,11 @@ export default function HistoryScreen({ onNavigate }: Props) {
       </section>
 
       {/* ── Page content ─────────────────────────────────────────────── */}
+
       <div className={styles.content}>
         <Grid fullWidth>
           {/* ── Load state ───────────────────────────────────────────── */}
+
           {loadError && (
             <Column sm={4} md={8} lg={16}>
               <InlineNotification
@@ -236,6 +239,7 @@ export default function HistoryScreen({ onNavigate }: Props) {
           )}
 
           {/* ── Historical readiness posture ────────────────────────── */}
+
           <Column sm={4} md={8} lg={16}>
             <div className={styles.sectionHeading}>
               <div>
@@ -340,6 +344,7 @@ export default function HistoryScreen({ onNavigate }: Props) {
           </Column>
 
           {/* ── Release decision archive ─────────────────────────────── */}
+
           <Column sm={4} md={8} lg={16}>
             <section className={styles.historySection}>
               <div className={styles.sectionHeading}>
@@ -388,11 +393,8 @@ export default function HistoryScreen({ onNavigate }: Props) {
                             persistent
                             value={searchQuery}
                             placeholder="Search application, release, environment, or decision"
-                            onChange={(event) => {
-                              const target =
-                                event.target as HTMLInputElement
-
-                              setSearchQuery(target.value)
+                            onChange={(_event, value) => {
+                              setSearchQuery(value ?? '')
                             }}
                           />
                         </TableToolbarContent>
@@ -528,6 +530,7 @@ export default function HistoryScreen({ onNavigate }: Props) {
                                       className={scoreClass(score)}
                                     >
                                       {score ?? '—'}
+
                                       {score != null && (
                                         <small>/100</small>
                                       )}
@@ -547,6 +550,7 @@ export default function HistoryScreen({ onNavigate }: Props) {
           </Column>
 
           {/* ── IBM Bob archive explanation ─────────────────────────── */}
+
           <Column sm={4} md={8} lg={16}>
             <section className={styles.bobFooter}>
               <div className={styles.bobFooterIcon}>
