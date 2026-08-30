@@ -37,7 +37,8 @@ IBM Bob was used in two fundamental ways: as the development partner that helped
 
 ### 1. IBM Bob as the development partner
 
-Kazi Tasin used **IBM Bob 2.0** throughout the project’s development. Bob contributed directly to the application rather than being used only for ideation or documentation.
+Kazi Tasin used **IBM Bob 2.0** throughout the project’s development. Bob contributed directly to the application rather than being used only for ideation or documentation. 
+Kazi Tasin leveraged features like Agent mode, subagent, MCP, custom made skills (not-prod-ready).
 
 Bob assisted with:
 
