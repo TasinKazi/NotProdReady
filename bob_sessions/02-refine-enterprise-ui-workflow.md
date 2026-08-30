@@ -6000,7 +6000,7 @@ The server hasn't reloaded yet — it's still running the old binary. Bob hot-re
       "env": {
         "ANTHROPIC_API_KEY": "",
         "OPENAI_API_KEY": "",
-        "GEMINI_API_KEY": "AIzaSyDnC6lCX2drahV4EiD13RfjSnNl_CrokKM"
+        "GEMINI_API_KEY": ""
       },
       "disabled": false,
       "alwaysAllow": []
