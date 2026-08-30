@@ -2,12 +2,24 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.analyses import router as analyses_router
 from app.api.remediation import router as remediation_router
+
+# ── Local environment file ────────────────────────────────────────────────────
+# Load backend/.env.local when present (local development only).
+# override=False: values already set in the OS environment always win,
+# so production deployments that supply env vars directly are unaffected.
+_ENV_LOCAL = Path(__file__).resolve().parent.parent / ".env.local"
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    _load_dotenv(dotenv_path=_ENV_LOCAL, override=False)
+except ImportError:
+    pass  # python-dotenv not installed — fine in production if vars are set directly.
 
 app = FastAPI(
     title="NotProdReady API",
@@ -51,3 +63,12 @@ async def health() -> dict:
 
 app.include_router(analyses_router)
 app.include_router(remediation_router)
+
+# ── Bob integration status ────────────────────────────────────────────────────
+# Printed once at import time (i.e. when uvicorn loads the app module).
+# Never prints the key value — only SET / not configured.
+_bob_mode = os.environ.get("NOTPRODREADY_BOB_MODE", "mock").lower()
+if os.environ.get("BOB_API_KEY") and _bob_mode == "shell":
+    print("Bob integration: configured")
+else:
+    print("Bob integration: not configured")

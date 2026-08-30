@@ -173,6 +173,38 @@ async def create_analysis(
     )
 
 
+@router.get("", response_model=list[AnalysisStatusResponse])
+async def list_analyses() -> list[AnalysisStatusResponse]:
+    """List all analyses (for history screen)."""
+    from app import services as svc
+
+    analyses = list(svc._analyses.values())
+    # Return most recent first
+    analyses.sort(key=lambda a: a.created_at, reverse=True)
+    result_list = []
+    for a in analyses:
+        decision = None
+        readiness_score = None
+        blockers = None
+        if a.result is not None:
+            decision = a.result.decision.value if hasattr(a.result.decision, 'value') else str(a.result.decision)
+            readiness_score = a.result.readiness_score
+            blockers = a.result.summary.blockers
+        result_list.append(AnalysisStatusResponse(
+            analysis_id=a.analysis_id,
+            application_name=a.application_name,
+            release_version=a.release_version,
+            environment=a.environment,
+            status=a.status,
+            created_at=a.created_at,
+            error=a.error,
+            decision=decision,
+            readiness_score=readiness_score,
+            blockers=blockers,
+        ))
+    return result_list
+
+
 @router.get("/{analysis_id}", response_model=AnalysisStatusResponse)
 async def get_analysis_status(analysis_id: str) -> AnalysisStatusResponse:
     from app import services as svc
@@ -199,16 +231,46 @@ async def stream_events(analysis_id: str) -> StreamingResponse:
     if analysis is None:
         raise HTTPException(status_code=404, detail="Analysis not found")
 
+    # Subscribe FIRST, then snapshot the buffer.
+    # This ensures no events published between the two operations are lost:
+    # - Events before subscribe() are in the buffer (replay covers them)
+    # - Events after subscribe() go into q (live stream covers them)
+    # - Events that appear in both (published between subscribe and buffer snapshot)
+    #   are deduplicated by sequence number on the frontend via the buffer replay only.
+    # Note: in an asyncio single-threaded event loop, subscribe() and get_event_buffer()
+    # execute without interruption between them (no await), so no events can be
+    # published between them.
     q = svc.subscribe(analysis_id)
+    buffered = list(svc.get_event_buffer(analysis_id))
 
     async def event_generator():
         try:
+            # ── Replay buffered events first ──────────────────────────────────
+            # This ensures late subscribers (connecting after the analysis
+            # completes or after early events) receive the full event history.
+            for buffered_event in buffered:
+                payload = json.dumps({
+                    "event": buffered_event.event,
+                    "data": buffered_event.data,
+                    "sequence": buffered_event.sequence,
+                })
+                yield f"event: message\ndata: {payload}\n\n"
+
+            # If already complete, close after replay — no need to wait for queue
+            if analysis.status in (AnalysisStatus.COMPLETED, AnalysisStatus.FAILED):
+                yield "event: done\ndata: {}\n\n"
+                return
+
+            # ── Stream live events ────────────────────────────────────────────
             while True:
                 try:
-                    event: AnalysisEvent = await asyncio.wait_for(q.get(), timeout=30.0)
+                    event: AnalysisEvent = await asyncio.wait_for(q.get(), timeout=15.0)
                 except asyncio.TimeoutError:
-                    # Send keep-alive comment
-                    yield ": keep-alive\n\n"
+                    # Send a named ping event — browser EventSource ignores
+                    # SSE comment lines (": keep-alive") for connection-liveness
+                    # purposes on some implementations, but a named event with
+                    # a retry hint keeps the connection alive reliably.
+                    yield "event: ping\ndata: {}\n\n"
                     continue
 
                 if event.event == "__done__":
@@ -219,12 +281,6 @@ async def stream_events(analysis_id: str) -> StreamingResponse:
                 yield f"event: message\ndata: {payload}\n\n"
         finally:
             svc.unsubscribe(analysis_id, q)
-
-    # If analysis is already complete, check for a cached result
-    if analysis.status == AnalysisStatus.COMPLETED:
-        async def replay():
-            yield "event: done\ndata: {}\n\n"
-        return StreamingResponse(replay(), media_type="text/event-stream")
 
     return StreamingResponse(
         event_generator(),

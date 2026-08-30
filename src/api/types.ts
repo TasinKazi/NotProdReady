@@ -135,6 +135,10 @@ export interface AnalysisStatusResponse {
   status: AnalysisStatus
   created_at: string
   error?: string
+  // Populated for COMPLETED analyses
+  decision?: string
+  readiness_score?: number
+  blockers?: number
 }
 
 /** A normalized SSE message payload. */

@@ -143,9 +143,16 @@ Permitted examples:
 **Never:**
 - Deploy or start servers
 - Execute migrations
-- Delete or modify files
+- Modify anything inside `repository/`
+- Modify anything inside `documents/`
 - Access production infrastructure or credentials
-- Run any destructive command
+- Run destructive commands
+
+The ONLY permitted file write during analysis is:
+
+`output/release-result.json`
+
+Writing that file is REQUIRED in Phase 6.
 
 Prefer static evidence when sufficient.
 
@@ -155,51 +162,33 @@ Prefer static evidence when sufficient.
 
 Compute the readiness score:
 
-```
 score = 100 - (blockers × 20) - (warnings × 5)
 score = max(0, min(100, score))
-```
 
 Decision rule:
-- **NO-GO**: one or more confirmed BLOCK findings
-- **GO**: no confirmed BLOCK findings
+- NO-GO: one or more confirmed BLOCK findings
+- GO: no confirmed BLOCK findings
 
-**Output rule — CRITICAL:**
+## REQUIRED RESULT ARTIFACT
 
-Your final assistant message must contain **only** the JSON object described in the output contract.
+After constructing the final ReleaseResult:
 
-- No prose before the JSON.
-- No prose after the JSON.
-- No Markdown code fences.
-- No explanation.
+1. Write the complete JSON object to:
 
-The exact required schema is in `.bob/skills/not-prod-ready/output-contract.md`.
+   `output/release-result.json`
 
----
+2. The file must contain ONLY valid JSON.
+3. It must satisfy `.bob/skills/not-prod-ready/output-contract.md`.
+4. Read the file back once and confirm it is complete.
+5. Do not modify `repository/` or `documents/` while writing this artifact.
 
-## FINAL RESPONSE REQUIREMENT
+## FINAL ASSISTANT MESSAGE
 
-**This block overrides everything else.**
+After the artifact has been written successfully, return the EXACT SAME JSON
+object as the final assistant message.
 
-When the analysis is complete your very last message **must** be a single raw JSON
-object and nothing else.
+No prose.
+No Markdown.
+No code fences.
 
-✗ WRONG — the parser will reject this:
-```
-Here is the analysis result:
-{"decision": "NO-GO", ...}
-The release is not ready.
-```
-
-✓ CORRECT — the parser will accept this:
-```
-{"decision":"NO-GO","readiness_score":61,...}
-```
-
-Rules — all are mandatory:
-1. The message begins with `{` and ends with `}`.
-2. No characters appear before the opening `{`.
-3. No characters appear after the closing `}`.
-4. No Markdown code fences (no triple backticks).
-5. No explanatory prose anywhere in the message.
-6. The JSON must satisfy every field in the output contract schema.
+The final message must begin with `{` and end with `}`.

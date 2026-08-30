@@ -1,4 +1,6 @@
 export type ViewId =
+  | 'login'
+  | 'welcome'
   | 'overview'
   | 'new-analysis'
   | 'analysis-in-progress'

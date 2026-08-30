@@ -21,3 +21,15 @@ backend/workspaces/
 # OS/editor junk
 .DS_Store
 Thumbs.db
+!*.env.local.example
+
+# MCP server build output
+.bob/mcp-servers/*/node_modules/
+.bob/mcp-servers/*/build/
+
+# MCP server environment / secrets
+.bob/mcp.env
+
+# Bob local runtime files
+.bob/tmp/
+.bob/mcp.json

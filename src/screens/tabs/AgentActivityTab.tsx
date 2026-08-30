@@ -1,76 +1,104 @@
 import {
-  StructuredListWrapper,
-  StructuredListHead,
-  StructuredListRow,
-  StructuredListCell,
-  StructuredListBody,
+  DataTable,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableHeader,
+  TableRow,
   Tag,
 } from '@carbon/react'
 import { CheckmarkFilled, WarningFilled, ErrorFilled } from '@carbon/icons-react'
 import type { AgentStep } from '../../data/mockAnalysis'
+import { formatTimestamp } from '../../utils/formatters'
 import styles from './AgentActivityTab.module.scss'
 
 interface Props {
   activity: AgentStep[]
 }
 
-function StatusIcon({ status }: { status: AgentStep['status'] }) {
-  if (status === 'error') return <ErrorFilled size={16} className={styles.iconError} />
-  if (status === 'warn') return <WarningFilled size={16} className={styles.iconWarn} />
-  return <CheckmarkFilled size={16} className={styles.iconOk} />
-}
-
-function StatusTag({ status }: { status: AgentStep['status'] }) {
-  if (status === 'error') return <Tag type="red" size="sm">error</Tag>
-  if (status === 'warn') return <Tag type="warm-gray" size="sm">warn</Tag>
-  return <Tag type="green" size="sm">ok</Tag>
-}
+const headers = [
+  { key: 'num', header: '#' },
+  { key: 'timestamp', header: 'Timestamp' },
+  { key: 'action', header: 'Action' },
+  { key: 'target', header: 'Target' },
+  { key: 'result', header: 'Result' },
+  { key: 'status', header: 'Status' },
+]
 
 export default function AgentActivityTab({ activity }: Props) {
+  const rows = activity.map((s, i) => ({
+    id: s.id,
+    num: String(i + 1),
+    timestamp: s.timestamp,
+    action: s.action,
+    target: s.target,
+    result: s.result,
+    status: s.status,
+  }))
+
   return (
     <div className={styles.root}>
       <p className={styles.preamble}>
         Sequential tool calls issued by IBM Bob during this analysis run.
       </p>
-      <StructuredListWrapper>
-        <StructuredListHead>
-          <StructuredListRow head>
-            <StructuredListCell head>#</StructuredListCell>
-            <StructuredListCell head>Timestamp</StructuredListCell>
-            <StructuredListCell head>Action</StructuredListCell>
-            <StructuredListCell head>Target</StructuredListCell>
-            <StructuredListCell head>Result</StructuredListCell>
-            <StructuredListCell head>Status</StructuredListCell>
-          </StructuredListRow>
-        </StructuredListHead>
-        <StructuredListBody>
-          {activity.map((step, idx) => (
-            <StructuredListRow key={step.id}>
-              <StructuredListCell>
-                <span className={styles.stepNum}>{idx + 1}</span>
-              </StructuredListCell>
-              <StructuredListCell>
-                <code className={styles.timestamp}>{step.timestamp}</code>
-              </StructuredListCell>
-              <StructuredListCell>
-                <code className={styles.action}>{step.action}</code>
-              </StructuredListCell>
-              <StructuredListCell>
-                <code className={styles.target}>{step.target}</code>
-              </StructuredListCell>
-              <StructuredListCell>
-                <span className={styles.result}>{step.result}</span>
-              </StructuredListCell>
-              <StructuredListCell>
-                <div className={styles.statusCell}>
-                  <StatusIcon status={step.status} />
-                  <StatusTag status={step.status} />
-                </div>
-              </StructuredListCell>
-            </StructuredListRow>
-          ))}
-        </StructuredListBody>
-      </StructuredListWrapper>
+      <DataTable rows={rows} headers={headers}>
+        {({ rows: tableRows, headers: tableHeaders, getTableProps, getHeaderProps, getRowProps, getTableContainerProps }) => (
+          <TableContainer {...getTableContainerProps()}>
+            <Table {...getTableProps()} size="sm">
+              <TableHead>
+                <TableRow>
+                  {tableHeaders.map((header) => {
+                    const hProps = getHeaderProps({ header })
+                    return (
+                      <TableHeader {...hProps}>
+                        {header.header}
+                      </TableHeader>
+                    )
+                  })}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {tableRows.map((row) => {
+                  const step = activity.find((s) => s.id === row.id)!
+                  const rowProps = getRowProps({ row })
+                  return (
+                    <TableRow {...rowProps}>
+                      <TableCell>
+                        <span className={styles.stepNum}>{row.cells[0].value}</span>
+                      </TableCell>
+                      <TableCell>
+                        <code className={styles.timestamp}>{formatTimestamp(step.timestamp)}</code>
+                      </TableCell>
+                      <TableCell>
+                        <code className={styles.action}>{step.action}</code>
+                      </TableCell>
+                      <TableCell>
+                        <code className={styles.target}>{step.target}</code>
+                      </TableCell>
+                      <TableCell>
+                        <span className={styles.result}>{step.result}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className={styles.statusCell}>
+                          {step.status === 'error' ? (
+                            <><ErrorFilled size={14} className={styles.iconError} /><Tag type="red" size="sm">error</Tag></>
+                          ) : step.status === 'warn' ? (
+                            <><WarningFilled size={14} className={styles.iconWarn} /><Tag type="warm-gray" size="sm">warn</Tag></>
+                          ) : (
+                            <><CheckmarkFilled size={14} className={styles.iconOk} /><Tag type="green" size="sm">ok</Tag></>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </DataTable>
     </div>
   )
 }

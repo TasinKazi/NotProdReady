@@ -1,0 +1,445 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(0, 1.15fr) minmax(420px, 0.85fr);
+  background: #f4f4f4;
+}
+
+/* ── Product identity panel ───────────────────────────────────────── */
+
+.productPanel {
+  position: relative;
+  overflow: hidden;
+  background: #161616;
+  border-right: 1px solid #393939;
+}
+
+.productPanel::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(100% - 1px),
+      rgba(255, 255, 255, 0.04) calc(100% - 1px)
+    );
+  content: '';
+  pointer-events: none;
+}
+
+.productPanelInner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  width: 100%;
+  min-height: 100vh;
+  flex-direction: column;
+  padding: 36px 48px 40px;
+}
+
+.brandRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  min-height: 36px;
+}
+
+.brandName,
+.productName {
+  color: #f4f4f4;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.productName {
+  color: #78a9ff;
+}
+
+.brandDivider {
+  width: 1px;
+  height: 18px;
+  background: #525252;
+}
+
+/* ── Product hero ─────────────────────────────────────────────────── */
+
+.productHero {
+  max-width: 780px;
+  margin-top: 96px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: #78a9ff;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.productHero h1 {
+  max-width: 820px;
+  margin: 0 0 24px;
+  color: #ffffff;
+  font-size: clamp(3.8rem, 6vw, 7rem);
+  font-weight: 300;
+  line-height: 0.9;
+  letter-spacing: -0.055em;
+}
+
+.heroDescription {
+  max-width: 720px;
+  margin: 0;
+  color: #c6c6c6;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+/* ── IBM Bob capability trail ─────────────────────────────────────── */
+
+.capabilityList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: auto;
+  padding-top: 64px;
+  border-top: 1px solid #393939;
+}
+
+.capabilityItem {
+  display: grid;
+  grid-template-columns: 34px 34px minmax(0, 1fr) 18px;
+  gap: 10px;
+  min-height: 174px;
+  padding: 20px;
+  border-right: 1px solid #393939;
+}
+
+.capabilityItem:first-child {
+  padding-left: 0;
+}
+
+.capabilityItem:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.capabilityIndex {
+  color: #6f6f6f;
+  font-family:
+    'IBM Plex Mono',
+    Consolas,
+    monospace;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.capabilityIcon {
+  display: flex;
+  width: 30px;
+  height: 30px;
+  align-items: center;
+  justify-content: center;
+  background: #262626;
+  color: #78a9ff;
+}
+
+.capabilityItem h2 {
+  margin: 0 0 8px;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.capabilityItem p {
+  margin: 0;
+  color: #a8a8a8;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.capabilityCheck {
+  color: #42be65;
+}
+
+/* ── Product footer ───────────────────────────────────────────────── */
+
+.productFooter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid #393939;
+  color: #78a9ff;
+}
+
+.productFooter > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.productFooter strong {
+  color: #f4f4f4;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.productFooter span {
+  color: #8d8d8d;
+  font-size: 0.6875rem;
+}
+
+/* ── Sign-in panel ────────────────────────────────────────────────── */
+
+.loginPanel {
+  display: flex;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: #f4f4f4;
+}
+
+.loginCard {
+  width: min(100%, 520px);
+  background: #ffffff;
+  border: 1px solid #d6d6d6;
+  border-top: 3px solid #0f62fe;
+}
+
+.loginHeader {
+  padding: 32px 32px 26px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.loginEyebrow {
+  margin: 0 0 8px;
+  color: #6f6f6f;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.loginHeader h2 {
+  margin: 0 0 12px;
+  color: #161616;
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.loginHeader p:last-child {
+  margin: 0;
+  color: #525252;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.loginCard :global(.cds--inline-notification),
+.loginCard :global(.bx--inline-notification) {
+  margin: 0;
+  border-radius: 0;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px 32px 32px;
+}
+
+.form :global(.cds--label),
+.form :global(.bx--label) {
+  color: #525252;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.form :global(.cds--text-input),
+.form :global(.bx--text-input) {
+  height: 52px;
+  background: #f4f4f4;
+  border-bottom: 1px solid #8d8d8d;
+  border-radius: 0;
+}
+
+.form :global(.cds--text-input:focus),
+.form :global(.bx--text-input:focus) {
+  outline: 2px solid #0f62fe;
+  outline-offset: -2px;
+}
+
+.continueButton:global(.cds--btn),
+.continueButton:global(.bx--btn) {
+  display: inline-flex;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 56px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 1.2;
+}
+
+/* ── Demo environment note ────────────────────────────────────────── */
+
+.demoNote {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  gap: 10px;
+  margin: 0 32px 28px;
+  padding: 16px;
+  background: #edf5ff;
+  border-left: 3px solid #0f62fe;
+  color: #0f62fe;
+}
+
+.demoNote strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #161616;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.demoNote p {
+  margin: 0;
+  color: #525252;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+/* ── Login footer ─────────────────────────────────────────────────── */
+
+.loginFooter {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 32px;
+  background: #f4f4f4;
+  border-top: 1px solid #e0e0e0;
+}
+
+.loginFooter span {
+  color: #6f6f6f;
+  font-size: 0.625rem;
+}
+
+/* ── Carbon refinements for this screen ───────────────────────────── */
+
+.page :global(.cds--btn),
+.page :global(.bx--btn),
+.page :global(.cds--text-input),
+.page :global(.bx--text-input) {
+  border-radius: 0;
+}
+
+/* ── Responsive layout ─────────────────────────────────────────────── */
+
+@media (max-width: 1200px) {
+  .page {
+    grid-template-columns: 1fr;
+  }
+
+  .productPanel,
+  .loginPanel {
+    min-height: auto;
+  }
+
+  .productPanel {
+    border-right: 0;
+    border-bottom: 1px solid #393939;
+  }
+
+  .productPanelInner {
+    min-height: auto;
+  }
+
+  .productHero {
+    margin-top: 72px;
+  }
+
+  .loginPanel {
+    padding: 56px 32px;
+  }
+}
+
+@media (max-width: 820px) {
+  .productPanelInner {
+    padding: 28px 28px 32px;
+  }
+
+  .productHero {
+    margin-top: 56px;
+  }
+
+  .productHero h1 {
+    font-size: clamp(3rem, 11vw, 5rem);
+  }
+
+  .capabilityList {
+    grid-template-columns: 1fr;
+    padding-top: 40px;
+  }
+
+  .capabilityItem,
+  .capabilityItem:first-child,
+  .capabilityItem:last-child {
+    min-height: auto;
+    padding: 18px 0;
+    border-right: 0;
+    border-bottom: 1px solid #393939;
+  }
+
+  .capabilityItem:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .productPanelInner {
+    padding: 24px 20px 28px;
+  }
+
+  .brandRow {
+    gap: 8px;
+  }
+
+  .productHero {
+    margin-top: 44px;
+  }
+
+  .productHero h1 {
+    font-size: clamp(2.8rem, 15vw, 4.2rem);
+  }
+
+  .loginPanel {
+    padding: 24px 16px;
+  }
+
+  .loginHeader,
+  .form {
+    padding-right: 22px;
+    padding-left: 22px;
+  }
+
+  .demoNote {
+    margin-right: 22px;
+    margin-left: 22px;
+  }
+
+  .loginFooter {
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}

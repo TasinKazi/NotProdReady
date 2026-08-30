@@ -206,9 +206,9 @@ async def stream_remediation_events(analysis_id: str) -> StreamingResponse:
         try:
             while True:
                 try:
-                    event: AnalysisEvent = await asyncio.wait_for(q.get(), timeout=30.0)
+                    event: AnalysisEvent = await asyncio.wait_for(q.get(), timeout=15.0)
                 except asyncio.TimeoutError:
-                    yield ": keep-alive\n\n"
+                    yield "event: ping\ndata: {}\n\n"
                     continue
 
                 if event.event == "__done__":

@@ -206,6 +206,10 @@ class AnalysisStatusResponse(BaseModel):
     status: AnalysisStatus
     created_at: datetime
     error: Optional[str] = None
+    # Populated for COMPLETED analyses — convenience for history screen
+    decision: Optional[str] = None
+    readiness_score: Optional[int] = None
+    blockers: Optional[int] = None
 
 
 class RemediationCreatedResponse(BaseModel):

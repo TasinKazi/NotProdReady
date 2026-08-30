@@ -6,12 +6,17 @@ import {
   InlineLoading,
   InlineNotification,
   Tag,
-  Tile,
 } from '@carbon/react'
 import {
+  ArrowRight,
   CheckmarkFilled,
   CircleDash,
-  RadioButton as RadioButtonIcon,
+  Code,
+  Document,
+  ErrorFilled,
+  IbmWatsonMachineLearning,
+  Search,
+  SecurityServices,
 } from '@carbon/icons-react'
 import type { ViewId } from '../types/navigation'
 import type { ApiReleaseResult, SseMessage } from '../api/types'
@@ -20,424 +25,888 @@ import styles from './AnalysisInProgressScreen.module.scss'
 
 interface Props {
   analysisId: string | null
+  isRevalidation?: boolean
   onComplete: (result: ApiReleaseResult) => void
   onNavigate: (view: ViewId) => void
 }
 
-// ── Agent model ─────────────────────────────────────────────
+/* ── Agent activity model ───────────────────────────────────────────── */
 
-type StepStatus = 'done' | 'active' | 'waiting'
+type StepStatus = 'done' | 'active' | 'waiting' | 'failed'
 
-interface AgentSubStep {
+interface AgentStep {
   id: string
   label: string
+  detail: string
   status: StepStatus
 }
 
-interface AgentGroup {
+interface AgentStage {
   id: string
   name: string
-  steps: AgentSubStep[]
-  groupStatus: StepStatus
+  description: string
+  status: StepStatus
+  icon: typeof Document
+  steps: AgentStep[]
 }
 
-// ── Evidence entries ────────────────────────────────────────
+/* ── Initial IBM Bob workflow ───────────────────────────────────────── */
 
-interface EvidenceEntry {
-  id: string
-  label: string
-  source: string
-  value: string
-  severity: 'block' | 'warn' | 'info'
+function makeInitialStages(isRevalidation: boolean): AgentStage[] {
+  const stages: AgentStage[] = [
+    {
+      id: 'runbook',
+      name: 'Runbook Analyst',
+      description:
+        'Extracting the intended release contract from deployment documentation.',
+      status: 'active',
+      icon: Document,
+      steps: [
+        {
+          id: 'runbook-parse',
+          label: 'Parse deployment documentation',
+          detail: 'Identify the release requirements Bob must verify.',
+          status: 'active',
+        },
+        {
+          id: 'runbook-runtime',
+          label: 'Extract runtime requirements',
+          detail: 'Runtime, environment, commands, and deployment expectations.',
+          status: 'waiting',
+        },
+        {
+          id: 'runbook-rollback',
+          label: 'Extract migration and rollback requirements',
+          detail: 'Operational expectations for database and rollback safety.',
+          status: 'waiting',
+        },
+      ],
+    },
+    {
+      id: 'repository',
+      name: 'Repository Inspector',
+      description:
+        'Inspecting implementation evidence that determines how the release actually behaves.',
+      status: 'waiting',
+      icon: Code,
+      steps: [
+        {
+          id: 'repo-files',
+          label: 'Inspect release-defining files',
+          detail:
+            'Package manifests, container configuration, environment templates, and migrations.',
+          status: 'waiting',
+        },
+        {
+          id: 'repo-startup',
+          label: 'Inspect startup and configuration',
+          detail:
+            'Confirm how the application starts and which settings are required.',
+          status: 'waiting',
+        },
+        {
+          id: 'repo-migrations',
+          label: 'Inspect migration and rollback artifacts',
+          detail:
+            'Confirm required operational artifacts exist in the repository.',
+          status: 'waiting',
+        },
+      ],
+    },
+    {
+      id: 'verification',
+      name: 'Release Verifier',
+      description:
+        'Comparing documented release claims with repository evidence before publishing findings.',
+      status: 'waiting',
+      icon: SecurityServices,
+      steps: [
+        {
+          id: 'verify-runtime',
+          label: 'Compare runtime and configuration',
+          detail: 'Verify the runbook matches the implementation.',
+          status: 'waiting',
+        },
+        {
+          id: 'verify-deploy',
+          label: 'Verify deployment behavior',
+          detail: 'Validate build, startup, environment, and migration expectations.',
+          status: 'waiting',
+        },
+        {
+          id: 'verify-decision',
+          label: 'Produce release decision',
+          detail: 'Classify findings and calculate the readiness decision.',
+          status: 'waiting',
+        },
+      ],
+    },
+  ]
+
+  if (isRevalidation) {
+    stages.push({
+      id: 'revalidation',
+      name: 'Revalidation Agent',
+      description:
+        'Checking the remediated repository against the previously confirmed findings.',
+      status: 'waiting',
+      icon: Search,
+      steps: [
+        {
+          id: 'reval-check',
+          label: 'Check remediated findings',
+          detail: 'Verify changes made during remediation.',
+          status: 'waiting',
+        },
+        {
+          id: 'reval-verify',
+          label: 'Verify remaining issues',
+          detail: 'Identify any findings that still require attention.',
+          status: 'waiting',
+        },
+        {
+          id: 'reval-decision',
+          label: 'Produce updated decision',
+          detail: 'Generate the updated readiness result.',
+          status: 'waiting',
+        },
+      ],
+    })
+  }
+
+  return stages
 }
 
-// ── Initial state ────────────────────────────────────────────
+/* ── Stage state helpers ────────────────────────────────────────────── */
 
-const INITIAL_GROUPS: AgentGroup[] = [
-  {
-    id: 'runbook-analyst',
-    name: 'Runbook Analyst',
-    groupStatus: 'active',
-    steps: [
-      { id: 'ra-1', label: 'Deployment requirements extracted', status: 'active' },
-    ],
-  },
-  {
-    id: 'repo-inspector',
-    name: 'Repository Inspector',
-    groupStatus: 'waiting',
-    steps: [
-      { id: 'ri-1', label: 'package.json inspected', status: 'waiting' },
-      { id: 'ri-2', label: 'environment configuration inspected', status: 'waiting' },
-      { id: 'ri-3', label: 'migrations being inspected', status: 'waiting' },
-    ],
-  },
-  {
-    id: 'release-verifier',
-    name: 'Release Verifier',
-    groupStatus: 'waiting',
-    steps: [
-      { id: 'rv-1', label: 'waiting for candidate findings', status: 'waiting' },
-    ],
-  },
-]
+function updateStage(
+  stages: AgentStage[],
+  stageId: string,
+  updater: (stage: AgentStage) => AgentStage,
+): AgentStage[] {
+  return stages.map((stage) =>
+    stage.id === stageId ? updater(stage) : stage,
+  )
+}
 
-// ── SSE event → UI state mapping ─────────────────────────────
-//
-// This is the only place that knows how to translate backend
-// event names to the agent activity model. Replacing
-// MockBobRunner with BobShellRunner in Step 9 only requires
-// the runner to emit the same event names — this code stays.
+function setStageActive(
+  stages: AgentStage[],
+  stageId: string,
+): AgentStage[] {
+  return updateStage(stages, stageId, (stage) => ({
+    ...stage,
+    status: 'active',
+    steps: stage.steps.map((step, index) => ({
+      ...step,
+      status:
+        step.status === 'done'
+          ? 'done'
+          : index ===
+              stage.steps.findIndex((candidate) => candidate.status !== 'done')
+            ? 'active'
+            : step.status,
+    })),
+  }))
+}
 
-function applySSEMessage(
-  groups: AgentGroup[],
-  evidence: EvidenceEntry[],
-  msg: SseMessage,
-): { groups: AgentGroup[]; evidence: EvidenceEntry[] } {
-  const evt = msg.event
-  const d = msg.data as Record<string, unknown>
+function completeStage(
+  stages: AgentStage[],
+  stageId: string,
+): AgentStage[] {
+  return updateStage(stages, stageId, (stage) => ({
+    ...stage,
+    status: 'done',
+    steps: stage.steps.map((step) => ({
+      ...step,
+      status: 'done',
+    })),
+  }))
+}
 
-  // Helper to update a step in a group
-  function setStepStatus(gId: string, sId: string, status: StepStatus): AgentGroup[] {
-    return groups.map((g) =>
-      g.id !== gId
-        ? g
-        : { ...g, steps: g.steps.map((s) => (s.id === sId ? { ...s, status } : s)) },
+function completeAllStages(stages: AgentStage[]): AgentStage[] {
+  return stages.map((stage) => ({
+    ...stage,
+    status: stage.status === 'failed' ? 'failed' : 'done',
+    steps: stage.steps.map((step) => ({
+      ...step,
+      status: step.status === 'failed' ? 'failed' : 'done',
+    })),
+  }))
+}
+
+function activateVerification(stages: AgentStage[]): AgentStage[] {
+  let next = completeStage(stages, 'repository')
+  next = setStageActive(next, 'verification')
+
+  return updateStage(next, 'verification', (stage) => ({
+    ...stage,
+    steps: stage.steps.map((step, index) => ({
+      ...step,
+      status: index === 0 ? 'active' : 'waiting',
+    })),
+  }))
+}
+
+/* ── IBM Bob event → workflow mapping ──────────────────────────────── */
+
+function applyBobEvent(
+  stages: AgentStage[],
+  message: SseMessage,
+): AgentStage[] {
+  switch (message.event) {
+    case 'analysis.started':
+    case 'document.analysis.started':
+      return setStageActive(stages, 'runbook')
+
+    case 'document.requirement.found':
+      return updateStage(stages, 'runbook', (stage) => {
+        const firstWaitingIndex = stage.steps.findIndex(
+          (step) => step.status === 'waiting',
+        )
+
+        return {
+          ...stage,
+          steps: stage.steps.map((step, index) => {
+            if (step.status === 'active') {
+              return { ...step, status: 'done' as StepStatus }
+            }
+
+            if (index === firstWaitingIndex) {
+              return { ...step, status: 'active' as StepStatus }
+            }
+
+            return step
+          }),
+        }
+      })
+
+    case 'document.analysis.completed': {
+      let next = completeStage(stages, 'runbook')
+      next = setStageActive(next, 'repository')
+      return next
+    }
+
+    case 'repository.analysis.started':
+    case 'repository.file.inspected':
+      return setStageActive(stages, 'repository')
+
+    case 'finding.detected':
+      return setStageActive(stages, 'verification')
+
+    case 'verification.started':
+      return activateVerification(stages)
+
+    case 'verification.completed':
+      return completeStage(stages, 'verification')
+
+    case 'revalidation.check':
+      return setStageActive(stages, 'revalidation')
+
+    case 'analysis.synthesizing':
+      return updateStage(stages, 'verification', (stage) => ({
+        ...stage,
+        status: 'active',
+        steps: stage.steps.map((step, index) => ({
+          ...step,
+          status:
+            index < stage.steps.length - 1
+              ? 'done'
+              : 'active',
+        })),
+      }))
+
+    case 'analysis.completed':
+      return completeAllStages(stages)
+
+    default:
+      return stages
+  }
+}
+
+/* ── User-safe failure message ─────────────────────────────────────── */
+
+function toUserSafeError(rawError: string): string {
+  if (
+    rawError.includes('ReleaseResult schema') ||
+    rawError.includes('Finalization output did not validate')
+  ) {
+    return (
+      'IBM Bob completed repository inspection, but the final release result ' +
+      'could not be validated. No readiness decision was published.'
     )
   }
 
-  function setGroupStatus(gId: string, status: StepStatus): AgentGroup[] {
-    return groups.map((g) => (g.id === gId ? { ...g, groupStatus: status } : g))
+  if (
+    rawError.toLowerCase().includes('timeout') ||
+    rawError.toLowerCase().includes('timed out')
+  ) {
+    return 'IBM Bob did not complete the analysis within the configured time limit.'
   }
 
-  switch (evt) {
-    case 'analysis.started':
-      return { groups, evidence }
-
-    case 'document.analysis.started':
-      return {
-        groups: setGroupStatus('runbook-analyst', 'active'),
-        evidence,
-      }
-
-    case 'document.requirement.found': {
-      const label = String(d.type ?? 'RUNBOOK').toUpperCase()
-      const value = String(d.value ?? '')
-      const source = String(d.source ?? '')
-      const newEntry: EvidenceEntry = {
-        id: `e-${msg.sequence}`,
-        label,
-        source,
-        value,
-        severity: 'info',
-      }
-      return { groups, evidence: [...evidence, newEntry] }
-    }
-
-    case 'document.analysis.completed':
-      return {
-        groups: setStepStatus('runbook-analyst', 'ra-1', 'done').map((g) =>
-          g.id === 'runbook-analyst' ? { ...g, groupStatus: 'done' } : g,
-        ),
-        evidence,
-      }
-
-    case 'repository.analysis.started':
-      return {
-        groups: setGroupStatus('repo-inspector', 'active'),
-        evidence,
-      }
-
-    case 'repository.file.inspected': {
-      const file = String(d.file ?? '')
-      // Advance the appropriate sub-step
-      let newGroups = groups
-      if (file === 'package.json') {
-        newGroups = setStepStatus('repo-inspector', 'ri-1', 'done')
-      } else if (file === '.env.example') {
-        newGroups = setStepStatus('repo-inspector', 'ri-2', 'active')
-      } else if (file === 'src/services/paymentService.js') {
-        newGroups = setStepStatus('repo-inspector', 'ri-2', 'done')
-      } else if (file.startsWith('migrations/')) {
-        newGroups = setStepStatus('repo-inspector', 'ri-3', 'active')
-      }
-      return { groups: newGroups, evidence }
-    }
-
-    case 'finding.detected': {
-      const sev = String(d.severity ?? 'BLOCK').toLowerCase() as EvidenceEntry['severity']
-      const newEntry: EvidenceEntry = {
-        id: `f-${msg.sequence}`,
-        label: sev === 'block' ? 'BLOCK' : sev === 'warn' ? 'WARN' : 'PASS',
-        source: String(d.title ?? ''),
-        value: `${String(d.claim ?? '')} → ${String(d.actual ?? '')}`,
-        severity: sev === 'block' ? 'block' : sev === 'warn' ? 'warn' : 'info',
-      }
-      return { groups, evidence: [...evidence, newEntry] }
-    }
-
-    case 'verification.started':
-      return {
-        groups: setGroupStatus('release-verifier', 'active').map((g) =>
-          g.id === 'release-verifier'
-            ? { ...g, steps: g.steps.map((s) => ({ ...s, status: 'active' as StepStatus })) }
-            : g,
-        ),
-        evidence,
-      }
-
-    case 'verification.completed':
-      return {
-        groups: groups.map((g) =>
-          g.id === 'release-verifier'
-            ? {
-                ...g,
-                groupStatus: 'done' as StepStatus,
-                steps: g.steps.map((s) => ({ ...s, status: 'done' as StepStatus })),
-              }
-            : g,
-        ),
-        evidence,
-      }
-
-    case 'analysis.synthesizing':
-      return { groups, evidence }
-
-    default:
-      return { groups, evidence }
+  if (
+    rawError.includes('BOB_API_KEY') ||
+    rawError.includes('API key') ||
+    rawError.includes('401')
+  ) {
+    return 'IBM Bob authentication failed. Check the configured Bob credentials.'
   }
+
+  if (
+    rawError.toLowerCase().includes('executable') ||
+    rawError.toLowerCase().includes('not found on path')
+  ) {
+    return 'The IBM Bob executable could not be started by the backend.'
+  }
+
+  if (rawError) {
+    const safeMessage = rawError
+      .replace(/[A-Za-z0-9_-]{40,}/g, '[REDACTED]')
+      .slice(0, 220)
+
+    return `IBM Bob analysis failed: ${safeMessage}`
+  }
+
+  return 'IBM Bob analysis failed. Check the backend logs for details.'
 }
 
-// ── Component ───────────────────────────────────────────────
+/* ── Component ─────────────────────────────────────────────────────── */
 
 export default function AnalysisInProgressScreen({
   analysisId,
+  isRevalidation = false,
   onComplete,
   onNavigate,
 }: Props) {
-  const [groups, setGroups] = useState<AgentGroup[]>(INITIAL_GROUPS)
-  const [evidence, setEvidence] = useState<EvidenceEntry[]>([])
+  const initialStages = makeInitialStages(isRevalidation)
+
+  const [stages, setStages] = useState<AgentStage[]>(initialStages)
   const [finished, setFinished] = useState(false)
   const [failed, setFailed] = useState(false)
   const [failureMessage, setFailureMessage] = useState<string | null>(null)
-  const [sseError, setSseError] = useState<string | null>(null)
-  const [appName, setAppName] = useState<string>('')
-  const [releaseVer, setReleaseVer] = useState<string>('')
-  const [envName, setEnvName] = useState<string>('')
+  const [resultLoadFailed, setResultLoadFailed] = useState(false)
+  const [connectionWarning, setConnectionWarning] =
+    useState<string | null>(null)
 
-  // Mutable ref so the SSE handler always sees latest state
-  const stateRef = useRef({ groups: INITIAL_GROUPS, evidence: [] as EvidenceEntry[] })
+  const [appName, setAppName] = useState('')
+  const [releaseVersion, setReleaseVersion] = useState('')
+  const [environment, setEnvironment] = useState('')
+
+  const stagesRef = useRef<AgentStage[]>(initialStages)
+
+  /* ── Subscribe to IBM Bob analysis activity ──────────────────────── */
 
   useEffect(() => {
-    if (!analysisId) return
+    if (!analysisId) {
+      setFailureMessage('No analysis ID was provided.')
+      setFailed(true)
+      setFinished(true)
+      return
+    }
 
     const cleanup = subscribeToEvents(analysisId, {
-      onMessage: (msg: SseMessage) => {
-        // Capture header metadata from first event
-        if (msg.event === 'analysis.started') {
-          const d = msg.data as Record<string, string>
-          if (d.application_name) setAppName(d.application_name)
-          if (d.release_version) setReleaseVer(d.release_version)
-          if (d.environment) setEnvName(d.environment)
+      onMessage: (message: SseMessage) => {
+        if (message.event === 'analysis.started') {
+          const data = message.data as Record<string, unknown>
+
+          if (data.application_name) {
+            setAppName(String(data.application_name))
+          }
+
+          if (data.release_version) {
+            setReleaseVersion(String(data.release_version))
+          }
+
+          if (data.environment) {
+            setEnvironment(String(data.environment))
+          }
         }
 
-        // Handle analysis failure — stop spinner, show error, expose retry CTA
-        if (msg.event === 'analysis.failed') {
-          const d = msg.data as Record<string, string>
-          const msg_text = d.error || 'Analysis failed. Check server logs for details.'
-          setFailureMessage(msg_text)
+        if (message.event === 'analysis.failed') {
+          const data = message.data as Record<string, unknown>
+          const rawError = String(data.error ?? '')
+
+          setFailureMessage(toUserSafeError(rawError))
           setFailed(true)
           setFinished(true)
           return
         }
 
-        const next = applySSEMessage(
-          stateRef.current.groups,
-          stateRef.current.evidence,
-          msg,
-        )
-        stateRef.current = next
-        setGroups([...next.groups])
-        setEvidence([...next.evidence])
+        const nextStages = applyBobEvent(stagesRef.current, message)
+        stagesRef.current = nextStages
+        setStages([...nextStages])
       },
 
       onDone: () => {
+        const finalized = completeAllStages(stagesRef.current)
+        stagesRef.current = finalized
+        setStages([...finalized])
         setFinished(true)
       },
 
-      onError: (err: string) => {
-        setSseError(`Connection error: ${err}. Click "View results" when ready.`)
-        setFinished(true)
+      onError: () => {
+        setConnectionWarning(
+          'The live progress connection was interrupted. IBM Bob may still be running in the backend.',
+        )
       },
     })
 
     return cleanup
   }, [analysisId])
 
+  /* ── Load the completed release result ────────────────────────────── */
+
   async function handleViewResults() {
-    if (!analysisId) {
-      onNavigate('analysis-result')
-      return
-    }
+    if (!analysisId) return
+
+    setResultLoadFailed(false)
+
     try {
       const result = await getAnalysisResult(analysisId)
       onComplete(result)
-    } catch {
-      // Fallback: navigate without result — result screen will use mock data
-      onNavigate('analysis-result')
+    } catch (error) {
+      setResultLoadFailed(true)
+      setFailureMessage(
+        error instanceof Error
+          ? `The analysis completed, but the result could not be loaded: ${error.message}`
+          : 'The analysis completed, but the result could not be loaded.',
+      )
     }
   }
 
+  /* ── Progress summary ─────────────────────────────────────────────── */
+
+  const completedStages = stages.filter(
+    (stage) => stage.status === 'done',
+  ).length
+
+  const activeStage = stages.find(
+    (stage) => stage.status === 'active',
+  )
+
+  const progressPercent =
+    stages.length > 0
+      ? Math.round((completedStages / stages.length) * 100)
+      : 0
+
+  const title = isRevalidation
+    ? appName
+      ? `Revalidating ${appName}`
+      : 'Revalidating release'
+    : appName
+      ? `Analyzing ${appName}`
+      : 'Preparing analysis'
+
   return (
     <div className={styles.page}>
-      <Grid narrow>
-        {/* Header */}
-        <Column sm={4} md={8} lg={16}>
-          <div className={styles.titleRow}>
+      {/* ── Analysis hero ────────────────────────────────────────────── */}
+      <section className={styles.hero}>
+        <div className={styles.heroInner}>
+          <div className={styles.heroCopy}>
+            <div className={styles.eyebrowRow}>
+              <span className={styles.eyebrow}>
+                {isRevalidation ? 'Revalidation' : 'Release analysis'}
+              </span>
+
+              <span className={styles.eyebrowDivider} aria-hidden="true" />
+
+              <span className={styles.agentState}>
+                <span className={styles.agentStateDot} aria-hidden="true" />
+                IBM Bob agent
+              </span>
+            </div>
+
+            <h1 className={styles.heading}>{title}</h1>
+
+            <div className={styles.releaseMeta}>
+              {releaseVersion && (
+                <Tag type="cool-gray" size="md">
+                  {releaseVersion}
+                </Tag>
+              )}
+
+              {environment && (
+                <Tag type="cool-gray" size="md">
+                  {environment}
+                </Tag>
+              )}
+
+              {analysisId && (
+                <span className={styles.analysisId}>
+                  {analysisId}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className={styles.heroAgent}>
+            <IbmWatsonMachineLearning size={28} />
+
             <div>
-              <h1 className={styles.heading}>
-                {appName ? `Analyzing ${appName}` : 'Preparing analysis\u2026'}
-              </h1>
-              <div className={styles.releaseMeta}>
-                {releaseVer && <Tag type="cool-gray" size="md">{releaseVer}</Tag>}
-                {envName && <Tag type="cool-gray" size="md">{envName}</Tag>}
-              </div>
+              <span className={styles.heroAgentLabel}>IBM Bob</span>
+              <span className={styles.heroAgentMeta}>
+                Release-readiness agent
+              </span>
             </div>
           </div>
-          <div className={styles.statusBar}>
-            {finished && failed ? (
-                <div className={styles.statusFailed}>
-                  <span>Analysis failed</span>
-                </div>
-              ) : finished ? (
-                <div className={styles.statusDone}>
-                  <CheckmarkFilled size={20} className={styles.iconDone} />
-                  <span>Analysis complete — reviewing results</span>
-                </div>
-              ) : (
-              <InlineLoading
-                description="IBM Bob is validating release readiness"
-                status="active"
-              />
-            )}
-          </div>
-          {failed && failureMessage && (
-            <InlineNotification
-              kind="error"
-              title="Analysis failed"
-              subtitle={failureMessage}
-              lowContrast
-              hideCloseButton
-            />
-          )}
-          {sseError && !failed && (
-            <InlineNotification
-              kind="warning"
-              title="Connection warning"
-              subtitle={sseError}
-              lowContrast
-              hideCloseButton
-            />
-          )}
-        </Column>
+        </div>
+      </section>
 
-        {/* Agent activity */}
-        <Column sm={4} md={5} lg={10}>
-          <Tile className={styles.agentTile}>
-            <p className={styles.tileTitle}>Agent activity</p>
-            <div className={styles.agentGroups}>
-              {groups.map((group) => (
-                <div key={group.id} className={styles.agentGroup}>
-                  <div className={styles.groupHeader}>
-                    <GroupStatusIcon status={group.groupStatus} />
-                    <span className={styles.groupName}>{group.name}</span>
-                    {group.groupStatus === 'active' && (
-                      <InlineLoading status="active" className={styles.groupLoading} />
-                    )}
-                  </div>
-                  <ul className={styles.stepList}>
-                    {group.steps.map((step) => (
-                      <li key={step.id} className={styles.stepItem}>
-                        <StepIcon status={step.status} />
-                        <span
-                          className={
-                            step.status === 'done'
-                              ? styles.stepDone
-                              : step.status === 'active'
-                              ? styles.stepActive
-                              : styles.stepWaiting
-                          }
-                        >
-                          {step.label}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </Tile>
-        </Column>
-
-        {/* Live evidence */}
-        <Column sm={4} md={3} lg={6}>
-          <Tile className={styles.evidenceTile}>
-            <p className={styles.tileTitle}>Live evidence</p>
-            {evidence.length === 0 ? (
-              <p className={styles.evidenceEmpty}>Collecting evidence&hellip;</p>
+      {/* ── Analysis status band ─────────────────────────────────────── */}
+      <section
+        className={
+          failed
+            ? styles.statusBandFailed
+            : finished
+              ? styles.statusBandComplete
+              : styles.statusBandActive
+        }
+      >
+        <div className={styles.statusBandInner}>
+          <div className={styles.statusPrimary}>
+            {failed ? (
+              <ErrorFilled size={20} />
+            ) : finished ? (
+              <CheckmarkFilled size={20} />
             ) : (
-              <div className={styles.evidenceList}>
-                {evidence.map((e) => (
-                  <div key={e.id} className={styles.evidenceItem}>
-                    <span
-                      className={
-                        e.severity === 'block'
-                          ? styles.evidenceLabelBlock
-                          : e.severity === 'warn'
-                          ? styles.evidenceLabelWarn
-                          : styles.evidenceLabelInfo
-                      }
-                    >
-                      {e.label}
-                    </span>
-                    <code className={styles.evidenceSource}>{e.source}</code>
-                    <p className={styles.evidenceValue}>{e.value}</p>
-                  </div>
-                ))}
-              </div>
+              <InlineLoading status="active" />
             )}
-          </Tile>
-        </Column>
 
-        {/* CTA once finished */}
-        {finished && (
+            <div>
+              <span className={styles.statusLabel}>
+                {failed
+                  ? 'Analysis failed'
+                  : finished
+                    ? 'IBM Bob analysis complete'
+                    : 'IBM Bob is validating release readiness'}
+              </span>
+
+              <span className={styles.statusMeta}>
+                {failed
+                  ? 'The release decision was not published.'
+                  : finished
+                    ? 'Repository inspection and release verification are complete.'
+                    : activeStage?.description ??
+                      'Preparing the release-readiness workflow.'}
+              </span>
+            </div>
+          </div>
+
+          {!failed && (
+            <div className={styles.progressSummary}>
+              <span className={styles.progressValue}>
+                {finished ? 100 : progressPercent}
+                <span>%</span>
+              </span>
+
+              <span className={styles.progressLabel}>
+                workflow complete
+              </span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Page content ─────────────────────────────────────────────── */}
+      <div className={styles.content}>
+        <Grid fullWidth>
+          {/* ── Failure / connection states ─────────────────────────── */}
+          {(failed || resultLoadFailed) && failureMessage && (
+            <Column sm={4} md={8} lg={16}>
+              <InlineNotification
+                kind="error"
+                title={
+                  failed
+                    ? 'IBM Bob could not complete the analysis'
+                    : 'Result could not be loaded'
+                }
+                subtitle={failureMessage}
+                lowContrast
+                hideCloseButton
+              />
+            </Column>
+          )}
+
+          {connectionWarning && !failed && (
+            <Column sm={4} md={8} lg={16}>
+              <InlineNotification
+                kind="warning"
+                title="Live progress connection interrupted"
+                subtitle={connectionWarning}
+                lowContrast
+                hideCloseButton
+              />
+            </Column>
+          )}
+
+          {/* ── IBM Bob agent workflow ───────────────────────────────── */}
           <Column sm={4} md={8} lg={16}>
-            <div className={styles.ctaRow}>
+            <section className={styles.workflowSection}>
+              <div className={styles.sectionHeading}>
+                <div>
+                  <p className={styles.sectionEyebrow}>Agent activity</p>
+                  <h2>IBM Bob release-readiness workflow</h2>
+                </div>
+
+                <p>
+                  Bob moves through each analysis stage before publishing a
+                  grounded GO / NO-GO decision.
+                </p>
+              </div>
+
+              <div className={styles.stageGrid}>
+                {stages.map((stage, index) => {
+                  const Icon = stage.icon
+
+                  return (
+                    <article
+                      key={stage.id}
+                      className={`${styles.stageCard} ${
+                        stage.status === 'active'
+                          ? styles.stageCardActive
+                          : stage.status === 'done'
+                            ? styles.stageCardDone
+                            : stage.status === 'failed'
+                              ? styles.stageCardFailed
+                              : styles.stageCardWaiting
+                      }`}
+                    >
+                      <div className={styles.stageHeader}>
+                        <span className={styles.stageIndex}>
+                          {String(index + 1).padStart(2, '0')}
+                        </span>
+
+                        <StageStatusIcon status={stage.status} />
+                      </div>
+
+                      <div className={styles.stageIcon}>
+                        <Icon size={24} />
+                      </div>
+
+                      <h3>{stage.name}</h3>
+                      <p className={styles.stageDescription}>
+                        {stage.description}
+                      </p>
+
+                      <div className={styles.stageSteps}>
+                        {stage.steps.map((step) => (
+                          <div key={step.id} className={styles.stepRow}>
+                            <StepStatusIcon status={step.status} />
+
+                            <div className={styles.stepCopy}>
+                              <span
+                                className={
+                                  step.status === 'active'
+                                    ? styles.stepLabelActive
+                                    : step.status === 'done'
+                                      ? styles.stepLabelDone
+                                      : styles.stepLabel
+                                }
+                              >
+                                {step.label}
+                              </span>
+
+                              <span className={styles.stepDetail}>
+                                {step.detail}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {stage.status === 'active' && !finished && (
+                        <div className={styles.stageWorking}>
+                          <InlineLoading
+                            status="active"
+                            description="IBM Bob working…"
+                          />
+                        </div>
+                      )}
+
+                      {stage.status === 'done' && (
+                        <div className={styles.stageComplete}>
+                          <CheckmarkFilled size={14} />
+                          Stage complete
+                        </div>
+                      )}
+                    </article>
+                  )
+                })}
+              </div>
+            </section>
+          </Column>
+
+          {/* ── What Bob is doing ────────────────────────────────────── */}
+          <Column sm={4} md={8} lg={16}>
+            <section className={styles.explanationBand}>
+              <div className={styles.explanationIcon}>
+                <IbmWatsonMachineLearning size={24} />
+              </div>
+
+              <div className={styles.explanationCopy}>
+                <p className={styles.explanationEyebrow}>IBM Bob execution</p>
+
+                <h2>
+                  Evidence first. Decision second.
+                </h2>
+
+                <p>
+                  Bob reads the deployment expectations, inspects the repository,
+                  verifies candidate mismatches, and only then produces a
+                  release-readiness result.
+                </p>
+              </div>
+
+              <div className={styles.explanationStat}>
+                <span>{completedStages}</span>
+                <small>
+                  of {stages.length}
+                  <br />
+                  stages complete
+                </small>
+              </div>
+            </section>
+          </Column>
+
+          {/* ── Terminal action ──────────────────────────────────────── */}
+          <Column sm={4} md={8} lg={16}>
+            <div className={styles.actionBar}>
+              <div className={styles.actionCopy}>
+                {failed ? (
+                  <>
+                    <span className={styles.actionTitle}>
+                      Release analysis did not complete
+                    </span>
+
+                    <span className={styles.actionMeta}>
+                      Return to New analysis and try the release package again.
+                    </span>
+                  </>
+                ) : finished ? (
+                  <>
+                    <span className={styles.actionTitle}>
+                      IBM Bob has produced a release decision
+                    </span>
+
+                    <span className={styles.actionMeta}>
+                      Open the result to review the readiness score, confirmed
+                      blockers, warnings, passes, and Bob remediation action.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.actionTitle}>
+                      IBM Bob analysis in progress
+                    </span>
+
+                    <span className={styles.actionMeta}>
+                      Keep this page open while Bob completes the
+                      release-readiness workflow.
+                    </span>
+                  </>
+                )}
+              </div>
+
               {failed ? (
-                <Button kind="secondary" onClick={() => onNavigate('new-analysis')}>
-                  Try again
+                <Button
+                  kind="secondary"
+                  size="lg"
+                  onClick={() => onNavigate('new-analysis')}
+                >
+                  Start new analysis
+                </Button>
+              ) : finished ? (
+                <Button
+                  kind="primary"
+                  size="lg"
+                  renderIcon={ArrowRight}
+                  onClick={handleViewResults}
+                >
+                  View release decision
                 </Button>
               ) : (
-                <Button kind="primary" onClick={handleViewResults}>
-                  View results
-                </Button>
+                <div className={styles.actionWorking}>
+                  <InlineLoading
+                    status="active"
+                    description="IBM Bob working"
+                  />
+                </div>
               )}
             </div>
           </Column>
-        )}
-      </Grid>
+        </Grid>
+      </div>
     </div>
   )
 }
 
-function GroupStatusIcon({ status }: { status: StepStatus }) {
-  if (status === 'done') return <CheckmarkFilled size={16} className={styles.iconDone} />
-  if (status === 'active') return <RadioButtonIcon size={16} className={styles.iconActive} />
-  return <CircleDash size={16} className={styles.iconWaiting} />
+/* ── Stage status icon ──────────────────────────────────────────────── */
+
+function StageStatusIcon({ status }: { status: StepStatus }) {
+  if (status === 'done') {
+    return (
+      <CheckmarkFilled
+        size={18}
+        className={styles.iconDone}
+      />
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <ErrorFilled
+        size={18}
+        className={styles.iconFailed}
+      />
+    )
+  }
+
+  if (status === 'active') {
+    return (
+      <span className={styles.activeStatusDot}>
+        <span aria-hidden="true" />
+      </span>
+    )
+  }
+
+  return (
+    <CircleDash
+      size={18}
+      className={styles.iconWaiting}
+    />
+  )
 }
 
-function StepIcon({ status }: { status: StepStatus }) {
-  if (status === 'done') return <CheckmarkFilled size={14} className={styles.iconDone} />
-  if (status === 'active') return <RadioButtonIcon size={14} className={styles.iconActive} />
-  return <CircleDash size={14} className={styles.iconWaiting} />
+/* ── Step status icon ───────────────────────────────────────────────── */
+
+function StepStatusIcon({ status }: { status: StepStatus }) {
+  if (status === 'done') {
+    return (
+      <CheckmarkFilled
+        size={14}
+        className={styles.iconDone}
+      />
+    )
+  }
+
+  if (status === 'failed') {
+    return (
+      <ErrorFilled
+        size={14}
+        className={styles.iconFailed}
+      />
+    )
+  }
+
+  if (status === 'active') {
+    return (
+      <span className={styles.stepActiveDot} aria-hidden="true" />
+    )
+  }
+
+  return (
+    <CircleDash
+      size={14}
+      className={styles.iconWaiting}
+    />
+  )
 }

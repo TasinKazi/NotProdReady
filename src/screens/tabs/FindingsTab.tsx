@@ -19,19 +19,17 @@ function SeverityIcon({ severity }: { severity: Finding['severity'] }) {
   return                           <CheckmarkFilled size={16} className={styles.iconPass} />
 }
 
-/** The accordion title row: icon + title + tag + id */
 function FindingTitle({ finding }: { finding: Finding }) {
   return (
     <span className={styles.accordionTitle}>
       <SeverityIcon severity={finding.severity} />
       <span className={styles.accordionTitleText}>{finding.title}</span>
       <SeverityTag severity={finding.severity} />
-      <span className={styles.findingId}>{finding.id}</span>
+      <code className={styles.findingId}>{finding.id}</code>
     </span>
   )
 }
 
-/** Claim → Evidence → Risk → Recommendation body */
 function FindingBody({ finding }: { finding: Finding }) {
   return (
     <div className={styles.body}>
@@ -42,13 +40,13 @@ function FindingBody({ finding }: { finding: Finding }) {
           {finding.runbook && (
             <div className={styles.claimBlock}>
               <p className={styles.claimLabel}>Runbook states</p>
-              <p className={styles.claimValue}>{finding.runbook}</p>
+              <code className={styles.claimValue}>{finding.runbook}</code>
             </div>
           )}
           {finding.repository && (
             <div className={styles.claimBlock}>
               <p className={styles.claimLabel}>Repository requires</p>
-              <p className={styles.claimValue}>{finding.repository}</p>
+              <code className={styles.claimValue}>{finding.repository}</code>
             </div>
           )}
         </div>
@@ -73,13 +71,12 @@ function FindingBody({ finding }: { finding: Finding }) {
       {/* Evidence */}
       <div className={styles.evidenceBlock}>
         <p className={styles.claimLabel}>Evidence</p>
-        <p className={styles.evidenceText}>
+        <div className={styles.evidenceContent}>
           {finding.evidenceFile && (
             <code className={styles.evidenceFileInline}>{finding.evidenceFile}</code>
           )}
-          {finding.evidenceFile ? '  ' : ''}
-          {finding.evidence}
-        </p>
+          <p className={styles.evidenceText}>{finding.evidence}</p>
+        </div>
       </div>
 
       {/* Recommendation */}

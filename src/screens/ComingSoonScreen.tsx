@@ -9,13 +9,14 @@ interface Props {
 export default function ComingSoonScreen({ title }: Props) {
   return (
     <div className={styles.page}>
-      <Grid narrow>
+      <Grid>
         <Column sm={4} md={6} lg={8}>
           <Tile className={styles.tile}>
-            <Time size={32} className={styles.icon} />
+            <Time size={24} className={styles.icon} />
             <h1 className={styles.heading}>{title}</h1>
             <p className={styles.body}>
-              This feature is coming soon. The current build focuses on release readiness analysis.
+              This feature is under development. The current release focuses on
+              automated release readiness analysis with AI remediation.
             </p>
           </Tile>
         </Column>

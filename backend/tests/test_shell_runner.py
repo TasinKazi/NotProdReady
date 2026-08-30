@@ -127,7 +127,8 @@ def test_build_command_structure(tmp_path):
     workspace.mkdir()
     cmd = runner.build_command(workspace, "test prompt")
 
-    assert cmd[0] == "bob"
+    # cmd[0] is the configured executable (may be a full path or bare "bob")
+    assert cmd[0] == runner._cfg.executable
     assert "run" in cmd
     assert "--trust" in cmd
     assert "--accept-license" in cmd

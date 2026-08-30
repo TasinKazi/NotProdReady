@@ -42,6 +42,11 @@ _BOB_CONFIG_SOURCE = Path(
 _analyses: dict[str, Analysis] = {}
 # SSE event queues: analysis_id → list of subscriber queues
 _event_queues: dict[str, list[asyncio.Queue]] = {}
+# SSE event replay buffer: analysis_id → ordered list of events emitted so far.
+# Late subscribers (connecting after events were published) receive a full replay
+# so the Live Evidence panel is always populated even when the analysis completes
+# before the frontend SSE connection is established.
+_event_buffers: dict[str, list[AnalysisEvent]] = {}
 
 
 # ── Public helpers ────────────────────────────────────────────────────────────
@@ -62,6 +67,7 @@ def create_analysis(
     )
     _analyses[analysis_id] = analysis
     _event_queues[analysis_id] = []
+    _event_buffers[analysis_id] = []
     return analysis
 
 
@@ -91,6 +97,11 @@ def get_result(analysis_id: str) -> Optional[ReleaseResult]:
     return analysis.result if analysis else None
 
 
+def get_event_buffer(analysis_id: str) -> list[AnalysisEvent]:
+    """Return a snapshot of buffered events for replay to late SSE subscribers."""
+    return list(_event_buffers.get(analysis_id, []))
+
+
 # ── SSE pub/sub ───────────────────────────────────────────────────────────────
 
 
@@ -111,6 +122,11 @@ def unsubscribe(analysis_id: str, q: asyncio.Queue) -> None:
 
 
 async def publish(analysis_id: str, event: AnalysisEvent) -> None:
+    # Buffer every non-sentinel event for late-subscriber replay.
+    if event.event != "__done__":
+        buf = _event_buffers.get(analysis_id)
+        if buf is not None:
+            buf.append(event)
     for q in list(_event_queues.get(analysis_id, [])):
         await q.put(event)
 

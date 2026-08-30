@@ -66,6 +66,14 @@ export async function createAnalysis(params: {
 }
 
 /**
+ * GET /api/analyses  (list all analyses)
+ */
+export async function listAnalyses(): Promise<AnalysisStatusResponse[]> {
+  const res = await fetch(`${BASE_URL}/api/analyses`)
+  return handleResponse<AnalysisStatusResponse[]>(res)
+}
+
+/**
  * GET /api/analyses/{analysis_id}
  */
 export async function getAnalysisStatus(
@@ -105,26 +113,47 @@ export function subscribeToEvents(
   const url = `${BASE_URL}/api/analyses/${analysisId}/events`
   const es = new EventSource(url)
 
+  // 'done' received — any subsequent onerror is just the normal TCP close.
+  let completed = false
+  // Count consecutive errors. EventSource auto-reconnects; only surface a
+  // warning to the UI after 3 consecutive failures so a single blip doesn't
+  // break the progress screen. Do NOT close the EventSource on first error.
+  let errorCount = 0
+
   es.addEventListener('message', (e) => {
+    errorCount = 0  // reset on any successful frame
     try {
       const parsed = JSON.parse(e.data) as SseMessage
       callbacks.onMessage(parsed)
     } catch {
-      callbacks.onError('Failed to parse SSE message')
+      // ignore parse errors silently
     }
   })
 
+  // Named 'ping' event sent every 15 s by the backend to keep the connection
+  // alive through proxies and browser idle timeouts.
+  es.addEventListener('ping', () => { errorCount = 0 })
+
   es.addEventListener('done', () => {
+    completed = true
     es.close()
     callbacks.onDone()
   })
 
   es.onerror = () => {
-    es.close()
-    callbacks.onError('SSE connection error')
+    if (completed) return           // normal close after 'done' — ignore
+    errorCount += 1
+    // Let EventSource auto-reconnect for transient errors.
+    // Only notify the UI after repeated failures.
+    if (errorCount >= 3) {
+      callbacks.onError('SSE connection error')
+    }
   }
 
-  return () => es.close()
+  return () => {
+    completed = true  // suppress onerror during cleanup
+    es.close()
+  }
 }
 
 // ── Remediation ───────────────────────────────────────────────────────────────
@@ -167,26 +196,39 @@ export function subscribeToRemediationEvents(
   const url = `${BASE_URL}/api/analyses/${analysisId}/remediation/events`
   const es = new EventSource(url)
 
+  let completed = false
+  let errorCount = 0
+
   es.addEventListener('message', (e) => {
+    errorCount = 0
     try {
       const parsed = JSON.parse(e.data) as SseMessage
       callbacks.onMessage(parsed)
     } catch {
-      callbacks.onError('Failed to parse SSE message')
+      // ignore
     }
   })
 
+  es.addEventListener('ping', () => { errorCount = 0 })
+
   es.addEventListener('done', () => {
+    completed = true
     es.close()
     callbacks.onDone()
   })
 
   es.onerror = () => {
-    es.close()
-    callbacks.onError('SSE connection error')
+    if (completed) return
+    errorCount += 1
+    if (errorCount >= 3) {
+      callbacks.onError('SSE connection error')
+    }
   }
 
-  return () => es.close()
+  return () => {
+    completed = true
+    es.close()
+  }
 }
 
 /**

@@ -1,77 +1,715 @@
 .page {
-  padding: 2rem 0 4rem;
+  min-height: calc(100vh - var(--npr-shell-header-h));
+  background: var(--npr-layer-01);
 }
 
-.titleRow {
+/* ── Product hero ───────────────────────────────────────────────────── */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: #161616;
+  border-bottom: 1px solid #393939;
+}
+
+.hero::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0,
+      transparent calc(100% - 520px),
+      rgba(255, 255, 255, 0.035) calc(100% - 520px),
+      rgba(255, 255, 255, 0.035) calc(100% - 519px),
+      transparent calc(100% - 519px)
+    );
+  content: '';
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.65fr) minmax(320px, 0.75fr);
+  width: 100%;
+  max-width: var(--npr-content-max);
+  min-height: 390px;
+  margin: 0 auto;
+}
+
+.heroCopy {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
+  justify-content: center;
+  padding:
+    56px
+    var(--npr-page-pad-x)
+    64px;
+}
+
+.eyebrowRow {
+  display: flex;
   flex-wrap: wrap;
-  margin-bottom: 2rem;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  color: #c6c6c6;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.heroDivider {
+  width: 1px;
+  height: 16px;
+  background: #525252;
+}
+
+.heroAgent {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #d9d9d9;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.heroAgentDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #42be65;
+  box-shadow: 0 0 0 4px rgba(66, 190, 101, 0.12);
 }
 
 .heading {
-  font-size: 1.75rem;
+  max-width: 900px;
+  margin-bottom: 24px;
+  color: #ffffff;
+  font-size: clamp(3rem, 5vw, 5.75rem);
+  font-weight: 300;
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+}
+
+.heroDescription {
+  max-width: 760px;
+  margin-bottom: 32px;
+  color: #c6c6c6;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.heroActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.heroGhostButton {
+  color: #ffffff;
+}
+
+.heroGhostButton:hover {
+  background: #262626;
+  color: #ffffff;
+}
+
+/* ── IBM Bob agent panel ───────────────────────────────────────────── */
+
+.heroAgentPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  padding: 48px;
+  background: #262626;
+  border-left: 1px solid #393939;
+}
+
+.agentPanelTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  color: #78a9ff;
+  font-size: 0.875rem;
   font-weight: 600;
+}
+
+.agentPanelTitle {
+  max-width: 260px;
+  margin-bottom: 28px;
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 300;
+  line-height: 1.12;
+}
+
+.agentCapability {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  border-top: 1px solid #393939;
+  color: #d9d9d9;
+  font-size: 0.8125rem;
+}
+
+.agentCapability:last-child {
+  border-bottom: 1px solid #393939;
+}
+
+.agentCapability svg {
+  color: #42be65;
+}
+
+/* ── Main page content ─────────────────────────────────────────────── */
+
+.content {
+  width: 100%;
+  max-width: var(--npr-content-max);
+  margin: 0 auto;
+  padding:
+    48px
+    var(--npr-page-pad-x)
+    96px;
+}
+
+.content :global(.cds--grid),
+.content :global(.bx--grid) {
+  padding-right: 0;
+  padding-left: 0;
+}
+
+/* ── Active IBM Bob analysis ──────────────────────────────────────── */
+
+.activeRun {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 88px;
+  margin-bottom: 48px;
+  padding: 16px 16px 16px 20px;
+  background: #ffffff;
+  border: 1px solid var(--npr-border-subtle);
+  border-left: 4px solid #0f62fe;
+}
+
+.activeRunIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activeRunCopy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.activeRunLabel {
+  color: #0f62fe;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.activeRunTitle {
+  overflow: hidden;
   color: #161616;
-  margin: 0 0 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activeRunVersion {
+  color: #6f6f6f;
+  font-family:
+    'IBM Plex Mono',
+    Consolas,
+    monospace;
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.activeRunMeta {
+  color: #6f6f6f;
+  font-size: 0.75rem;
+}
+
+/* ── Section headings ──────────────────────────────────────────────── */
+
+.sectionHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  min-height: 72px;
+  margin-top: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--npr-border-subtle);
+}
+
+.sectionEyebrow {
+  margin: 0 0 6px;
+  color: #6f6f6f;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #161616;
+  font-size: 1.5rem;
+  font-weight: 400;
   line-height: 1.2;
 }
 
-.tagline {
-  font-size: 0.875rem;
-  color: #525252;
+.sectionDescription {
+  max-width: 360px;
   margin: 0;
+  color: #6f6f6f;
+  font-size: 0.8125rem;
+  text-align: right;
 }
 
-.table {
+/* ── Readiness metrics ─────────────────────────────────────────────── */
+
+.metric {
+  position: relative;
+  min-height: 164px;
+  margin-top: 16px;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid var(--npr-border-subtle);
+  border-left-width: 3px;
+}
+
+.metricBlue {
+  border-left-color: #0f62fe;
+}
+
+.metricGreen {
+  border-left-color: #198038;
+}
+
+.metricRed {
+  border-left-color: #da1e28;
+}
+
+.metricPurple {
+  border-left-color: #8a3ffc;
+}
+
+.metricLabel {
+  display: block;
+  margin-bottom: 30px;
+  color: #525252;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.metricValue {
+  display: block;
+  color: #161616;
+  font-size: 3.2rem;
+  font-weight: 300;
+  line-height: 0.92;
+}
+
+.metricMeta {
+  display: block;
+  margin-top: 16px;
+  color: #6f6f6f;
+  font-size: 0.75rem;
+}
+
+.metricScoreRow {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.metricDenominator {
+  color: #8d8d8d;
+  font-size: 1rem;
+}
+
+/* ── IBM Bob workflow ──────────────────────────────────────────────── */
+
+.workflowSection {
+  margin-top: 56px;
+}
+
+.agentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #198038;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.agentBadgeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #42be65;
+}
+
+.workflowGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 16px;
+  border: 1px solid var(--npr-border-subtle);
+}
+
+.workflowStep {
+  position: relative;
+  min-height: 260px;
+  padding: 28px 24px 32px;
+  background: #ffffff;
+  border-right: 1px solid var(--npr-border-subtle);
+}
+
+.workflowStep:last-child {
+  border-right: 0;
+}
+
+.workflowStep::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: #0f62fe;
+  content: '';
+  transition: width 160ms ease;
+}
+
+.workflowStep:hover::after {
   width: 100%;
 }
 
-.tableRow {
-  cursor: pointer;
+.workflowNumber {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  color: #a8a8a8;
+  font-family:
+    'IBM Plex Mono',
+    Consolas,
+    monospace;
+  font-size: 0.6875rem;
 }
 
-.tableRow:hover td {
-  background-color: #e8e8e8;
+.workflowStep svg {
+  margin-bottom: 36px;
+  color: #0f62fe;
 }
 
-.releaseCode {
-  font-family: 'IBM Plex Mono', monospace;
-  font-size: 0.8125rem;
+.workflowStep h3 {
+  margin-bottom: 12px;
   color: #161616;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
-.decisionGo {
-  display: inline-flex;
+.workflowStep p {
+  margin: 0;
+  color: #525252;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+/* ── Recent analyses ───────────────────────────────────────────────── */
+
+.recentSection {
+  margin-top: 56px;
+}
+
+.loadingState {
+  display: flex;
+  min-height: 180px;
   align-items: center;
-  gap: 0.25rem;
-  font-size: 0.875rem;
+  padding: 24px;
+  background: #ffffff;
+  border: 1px solid var(--npr-border-subtle);
+  border-top: 0;
+}
+
+.emptyState {
+  display: flex;
+  min-height: 220px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 32px;
+  background: #ffffff;
+  border: 1px solid var(--npr-border-subtle);
+  border-top: 0;
+}
+
+.emptyState > div {
+  max-width: 620px;
+}
+
+.emptyEyebrow {
+  margin-bottom: 8px;
+  color: #6f6f6f;
+  font-size: 0.6875rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.emptyState h3 {
+  margin-bottom: 10px;
+  font-size: 1.25rem;
+}
+
+.emptyState p:last-child {
+  margin-bottom: 0;
+}
+
+.tableContainer {
+  margin-top: 16px;
+  border: 1px solid var(--npr-border-subtle);
+}
+
+.tableContainer :global(.cds--data-table),
+.tableContainer :global(.bx--data-table) {
+  width: 100%;
+}
+
+.tableContainer :global(.cds--data-table th),
+.tableContainer :global(.bx--data-table th) {
+  height: 48px;
+  background: #e8e8e8;
+  border-bottom: 1px solid #c6c6c6;
+}
+
+.tableContainer :global(.cds--data-table td),
+.tableContainer :global(.bx--data-table td) {
+  height: 56px;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  vertical-align: middle;
+}
+
+.tableContainer :global(.cds--data-table tbody tr:last-child td),
+.tableContainer :global(.bx--data-table tbody tr:last-child td) {
+  border-bottom: 0;
+}
+
+.blockerCount {
+  color: #da1e28;
+  font-weight: 600;
+}
+
+.noBlockers {
   color: #198038;
+  font-weight: 500;
 }
 
-.decisionNogo {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
+.tableScore {
+  color: #161616;
+  font-family:
+    'IBM Plex Mono',
+    Consolas,
+    monospace;
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.tableScore span {
+  margin-left: 2px;
+  color: #8d8d8d;
+  font-size: 0.6875rem;
+  font-weight: 400;
+}
+
+.failedCell {
   color: #da1e28;
 }
 
-.scoreHigh {
-  font-weight: 600;
-  color: #198038;
+/* ── Competition narrative footer ──────────────────────────────────── */
+
+.bobFooter {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.1fr);
+  gap: 64px;
+  margin-top: 64px;
+  padding: 40px;
+  background: #161616;
+  border-top: 3px solid #0f62fe;
 }
 
-.scoreMid {
+.bobFooterEyebrow {
+  margin-bottom: 10px;
+  color: #78a9ff;
+  font-size: 0.6875rem;
   font-weight: 600;
-  color: #f1c21b;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.scoreLow {
-  font-weight: 600;
-  color: #da1e28;
+.bobFooter h2 {
+  max-width: 520px;
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.75rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+
+.bobFooter > p {
+  align-self: center;
+  margin: 0;
+  color: #c6c6c6;
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+/* ── Carbon refinements for this screen ────────────────────────────── */
+
+.page :global(.cds--btn),
+.page :global(.bx--btn) {
+  border-radius: 0;
+}
+
+.page :global(.cds--tag),
+.page :global(.bx--tag) {
+  white-space: nowrap;
+}
+
+/* ── Responsive layout ─────────────────────────────────────────────── */
+
+@media (max-width: 1311px) {
+  .heroContent {
+    grid-template-columns: minmax(0, 1.4fr) minmax(300px, 0.7fr);
+  }
+
+  .heroAgentPanel {
+    padding: 40px 32px;
+  }
+
+  .workflowGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workflowStep:nth-child(2) {
+    border-right: 0;
+  }
+
+  .workflowStep:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--npr-border-subtle);
+  }
+}
+
+@media (max-width: 1055px) {
+  .heroContent {
+    grid-template-columns: 1fr;
+  }
+
+  .heroCopy {
+    padding-top: 48px;
+  }
+
+  .heroAgentPanel {
+    border-top: 1px solid #393939;
+    border-left: 0;
+  }
+
+  .sectionHeading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .sectionDescription {
+    text-align: left;
+  }
+
+  .bobFooter {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 671px) {
+  .content {
+    padding-top: 32px;
+  }
+
+  .heading {
+    font-size: clamp(2.6rem, 13vw, 4rem);
+  }
+
+  .heroActions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .heroActions :global(.cds--btn),
+  .heroActions :global(.bx--btn) {
+    width: 100%;
+    max-width: none;
+  }
+
+  .activeRun {
+    grid-template-columns: 32px minmax(0, 1fr);
+  }
+
+  .activeRun > :last-child {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .workflowGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .workflowStep,
+  .workflowStep:nth-child(2) {
+    border-right: 0;
+    border-bottom: 1px solid var(--npr-border-subtle);
+  }
+
+  .workflowStep:last-child {
+    border-bottom: 0;
+  }
+
+  .emptyState {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bobFooter {
+    padding: 28px 24px;
+  }
+}
+
+/* ── Reduced motion ────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .workflowStep::after {
+    transition: none;
+  }
 }

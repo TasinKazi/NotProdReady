@@ -100,8 +100,11 @@ def _sanitize(text: str) -> str:
 _BOB_PROMPT = (
     "$not-prod-ready "
     "Analyze the repository and deployment documentation in this workspace. "
-    "Your final message must be ONLY the raw JSON object described in the "
-    "output contract — no prose, no code fences, no explanation."
+    "When analysis is complete, write the final ReleaseResult JSON to "
+    "output/release-result.json exactly as required by the output contract. "
+    "Do not modify repository/ or documents/. "
+    "After writing the artifact, your final assistant message must contain "
+    "the exact same raw JSON object with no prose or code fences."
 )
 
 _FINALIZE_PROMPT = (
@@ -280,6 +283,162 @@ def _flatten_content(content) -> str:
     return str(content) if content is not None else ""
 
 
+# ── ReleaseResult normalization ───────────────────────────────────────────────
+# Bob's output may use different casings or aliases for enum values.
+# Normalize before schema validation so that legitimate variations are accepted
+# without weakening the schema itself.
+
+# FindingSeverity aliases: normalize to canonical uppercase values.
+_SEVERITY_ALIASES: dict[str, str] = {
+    "pass": "PASS", "passed": "PASS", "ok": "PASS", "info": "PASS",
+    "warn": "WARN", "warning": "WARN", "caution": "WARN",
+    "block": "BLOCK", "blocker": "BLOCK", "error": "BLOCK", "fail": "BLOCK",
+    "failed": "BLOCK", "critical": "BLOCK",
+}
+
+# Decision aliases: normalize to canonical values.
+_DECISION_ALIASES: dict[str, str] = {
+    "go": "GO",
+    "no_go": "NO-GO", "no-go": "NO-GO", "nogo": "NO-GO", "no go": "NO-GO",
+}
+
+# AgentStepStatus aliases
+_STEP_STATUS_ALIASES: dict[str, str] = {
+    "ok": "ok", "success": "ok", "pass": "ok", "passed": "ok",
+    "warn": "warn", "warning": "warn",
+    "error": "error", "fail": "error", "failed": "error",
+}
+
+
+def _normalize_finding(raw: dict) -> dict:
+    """Normalize a single finding dict to match the Finding schema.
+
+    Handles:
+    - severity/status case normalization
+    - missing required fields (defaults to safe values)
+    - extra revalidation-only fields (resolution_status etc.) are stripped
+      since they don't belong in FindingSeverity
+    """
+    out = dict(raw)
+    # Normalize severity
+    for field in ("severity", "status"):
+        val = out.get(field)
+        if isinstance(val, str):
+            normalized = _SEVERITY_ALIASES.get(val.lower())
+            if normalized:
+                out[field] = normalized
+            elif val.upper() in ("PASS", "WARN", "BLOCK"):
+                out[field] = val.upper()
+            else:
+                # Unknown value — default to BLOCK rather than fail silently
+                log.warning(
+                    "ReleaseResult normalize: unknown severity %r for finding %r — defaulting to BLOCK",
+                    val, out.get("id", "?"),
+                )
+                out[field] = "BLOCK"
+    # Ensure status mirrors severity when one is missing
+    if "severity" in out and "status" not in out:
+        out["status"] = out["severity"]
+    elif "status" in out and "severity" not in out:
+        out["severity"] = out["status"]
+    # evidence must be a list
+    if not isinstance(out.get("evidence"), list):
+        out["evidence"] = []
+    # Required string fields
+    for key in ("id", "category", "title", "claim", "actual", "explanation"):
+        if not isinstance(out.get(key), str):
+            out[key] = str(out.get(key, ""))
+    return out
+
+
+def _normalize_agent_step(raw: dict) -> dict:
+    """Normalize a single agent_activity step."""
+    out = dict(raw)
+    status = out.get("status", "ok")
+    if isinstance(status, str):
+        normalized = _STEP_STATUS_ALIASES.get(status.lower())
+        if normalized:
+            out["status"] = normalized
+        elif status not in ("ok", "warn", "error"):
+            out["status"] = "ok"
+    for key in ("id", "timestamp", "action", "target", "result"):
+        if not isinstance(out.get(key), str):
+            out[key] = str(out.get(key, ""))
+    return out
+
+
+def _normalize_release_result_dict(raw: dict) -> dict:
+    """Normalize a raw dict that should represent a ReleaseResult.
+
+    Handles common Bob output variations:
+    - Lowercase severity/decision enums
+    - Alternate decision spellings (NO_GO, NOGO)
+    - Numeric strings where numbers are expected (readiness_score)
+    - Missing optional arrays defaulted to []
+    - Nested finding normalization
+    - Nested agent_activity normalization
+
+    Does NOT invent required data fields (app, release, etc.) — those
+    are injected upstream by the caller with .setdefault().
+    """
+    out = dict(raw)
+
+    # Normalize decision
+    decision = out.get("decision")
+    if isinstance(decision, str):
+        normalized = _DECISION_ALIASES.get(decision.strip().lower())
+        if normalized:
+            out["decision"] = normalized
+        elif decision.upper() in ("GO", "NO-GO"):
+            out["decision"] = decision.upper()
+
+    # Normalize readiness_score: accept numeric strings
+    score = out.get("readiness_score")
+    if isinstance(score, str):
+        try:
+            out["readiness_score"] = int(score)
+        except (ValueError, TypeError):
+            try:
+                out["readiness_score"] = int(float(score))
+            except (ValueError, TypeError):
+                pass  # leave as-is; Pydantic will report the real error
+
+    # Normalize findings
+    findings = out.get("findings")
+    if isinstance(findings, list):
+        out["findings"] = [
+            _normalize_finding(f) if isinstance(f, dict) else f
+            for f in findings
+        ]
+    elif findings is None:
+        out["findings"] = []
+
+    # Normalize agent_activity
+    activity = out.get("agent_activity")
+    if isinstance(activity, list):
+        out["agent_activity"] = [
+            _normalize_agent_step(s) if isinstance(s, dict) else s
+            for s in activity
+        ]
+    elif activity is None:
+        out["agent_activity"] = []
+
+    # Normalize summary counts: accept string numbers
+    summary = out.get("summary")
+    if isinstance(summary, dict):
+        norm_summary = dict(summary)
+        for key in ("blockers", "warnings", "passed"):
+            val = norm_summary.get(key)
+            if isinstance(val, str):
+                try:
+                    norm_summary[key] = int(val)
+                except (ValueError, TypeError):
+                    pass
+        out["summary"] = norm_summary
+
+    return out
+
+
 def _try_parse_release_result(
     candidate: str,
     analysis: Analysis,
@@ -291,12 +450,14 @@ def _try_parse_release_result(
     end_time: datetime,
     duration_s: float,
 ) -> Optional[ReleaseResult]:
-    """Try to extract and validate a ReleaseResult from a single text candidate.
+    """Try to extract, normalize, and validate a ReleaseResult from a text candidate.
 
     Returns a validated ReleaseResult on success, or None if the candidate
     does not contain a parseable, schema-valid ReleaseResult.
 
     Never raises — callers iterate over candidates and pick the first success.
+    Logs the exact Pydantic ValidationError fields in development so the schema
+    mismatch can be diagnosed without exposing secrets to users.
     """
     text = candidate.strip()
     if not text:
@@ -332,11 +493,13 @@ def _try_parse_release_result(
     if not isinstance(parsed_json, dict):
         return None
 
-    # Inject required fields that Bob may omit
-    parsed_json.setdefault("analysis_id", analysis.analysis_id)
-    parsed_json.setdefault("app", analysis.application_name)
-    parsed_json.setdefault("release", analysis.release_version)
-    parsed_json.setdefault("environment", analysis.environment)
+    # The backend analysis record is authoritative.
+    # This is especially important during revalidation, where Bob may accidentally
+    # reuse metadata from the original analysis.
+    parsed_json["analysis_id"] = analysis.analysis_id
+    parsed_json["app"] = analysis.application_name
+    parsed_json["release"] = analysis.release_version
+    parsed_json["environment"] = analysis.environment
 
     # Synthesise metadata from result stats when absent
     stats = result_payload.get("stats", {}) or {}
@@ -357,10 +520,99 @@ def _try_parse_release_result(
     if "agent_activity" not in parsed_json:
         parsed_json["agent_activity"] = [s.model_dump() for s in agent_steps]
 
+    # ── Normalize before validation ───────────────────────────────────────────
+    # This handles legitimate Bob output variations (case differences, numeric
+    # strings, etc.) without weakening the schema.
+    parsed_json = _normalize_release_result_dict(parsed_json)
+
     try:
         return ReleaseResult.model_validate(parsed_json)
-    except (ValidationError, Exception):
+    except ValidationError as exc:
+        # Log every field error for development diagnosis.
+        # These logs are server-side only — never sent to the browser.
+        for err in exc.errors():
+            log.warning(
+                "ReleaseResult validation failed: path=%s | expected=%s | received=%r",
+                " → ".join(str(p) for p in err.get("loc", [])),
+                err.get("type", "?"),
+                err.get("input"),
+            )
         return None
+    except Exception as exc:  # noqa: BLE001
+        log.warning(
+            "ReleaseResult parse error (non-validation): %s: %s",
+            type(exc).__name__, _sanitize(str(exc)[:300]),
+        )
+        return None
+
+
+
+def _load_release_result_artifact(
+    workspace: Path,
+    analysis: Analysis,
+    result_payload: Optional[dict],
+    start_time: datetime,
+    agent_steps: list[AgentStep],
+    files_inspected: int,
+    commands_executed: int,
+) -> Optional[ReleaseResult]:
+    """Load the canonical ReleaseResult artifact written by Bob.
+
+    output/release-result.json is the primary result transport.
+    Assistant-message parsing remains only as a fallback.
+    """
+    artifact = workspace / "output" / "release-result.json"
+
+    if not artifact.is_file():
+        log.warning(
+            "BOB RESULT ARTIFACT: %s was not created",
+            artifact,
+        )
+        return None
+
+    try:
+        text = artifact.read_text(encoding="utf-8").strip()
+    except OSError as exc:
+        log.error(
+            "BOB RESULT ARTIFACT: could not read %s: %s",
+            artifact,
+            _sanitize(str(exc)),
+        )
+        return None
+
+    if not text:
+        log.error("BOB RESULT ARTIFACT: artifact is empty")
+        return None
+
+    end_time = datetime.now(timezone.utc)
+    duration_s = (end_time - start_time).total_seconds()
+
+    result = _try_parse_release_result(
+        candidate=text,
+        analysis=analysis,
+        result_payload=result_payload or {},
+        start_time=start_time,
+        agent_steps=agent_steps,
+        files_inspected=files_inspected,
+        commands_executed=commands_executed,
+        end_time=end_time,
+        duration_s=duration_s,
+    )
+
+    if result is None:
+        log.error(
+            "BOB RESULT ARTIFACT: release-result.json did not validate"
+        )
+        return None
+
+    log.info(
+        "BOB RESULT ARTIFACT: validated %s | decision=%s | score=%s",
+        artifact,
+        result.decision.value,
+        result.readiness_score,
+    )
+
+    return result
 
 
 def _extract_result_from_bob_output(
@@ -770,6 +1022,12 @@ class BobShellRunner(BobRunner):
         if not resolved_ws.exists():
             raise ValueError(f"Workspace does not exist: {resolved_ws}")
 
+        # Never allow an artifact from an earlier/original analysis to be reused
+        # during revalidation.
+        result_artifact = resolved_ws / "output" / "release-result.json"
+        result_artifact.parent.mkdir(parents=True, exist_ok=True)
+        result_artifact.unlink(missing_ok=True)
+
         # ── 3. Build command ──────────────────────────────────────────────────
         cmd = self.build_command(workspace, _BOB_PROMPT)
 
@@ -983,6 +1241,36 @@ class BobShellRunner(BobRunner):
             rec.bob_task_id = bob_task_id
 
         # ── 9. Parse final result ─────────────────────────────────────────────
+
+        # ── 9A. Primary result source: output/release-result.json ─────────────
+        artifact_result = _load_release_result_artifact(
+            workspace=resolved_ws,
+            analysis=analysis,
+            result_payload=result_payload,
+            start_time=start_time,
+            agent_steps=agent_steps,
+            files_inspected=files_inspected,
+            commands_executed=commands_executed,
+        )
+
+        if artifact_result is not None:
+            await emit(
+                "analysis.completed",
+                {
+                    "analysis_id": analysis.analysis_id,
+                    "decision": artifact_result.decision.value,
+                    "score": artifact_result.readiness_score,
+                },
+            )
+            return artifact_result
+
+        # Artifact unavailable/invalid.
+        # Fall through to the legacy assistant-message parser below.
+        log.warning(
+            "BOB RESULT: canonical artifact unavailable; "
+            "falling back to assistant-message parsing"
+        )
+
         if result_payload is None:
             log.error(
                 "BOB RESULT: no 'result' event received | tool calls: %s | stderr: %s",

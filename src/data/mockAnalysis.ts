@@ -148,7 +148,7 @@ export const mockAnalysis: MockAnalysis = {
   agentActivity: [
     {
       id: 'A-001',
-      timestamp: '2025-01-14T09:42:01Z',
+      timestamp: '2026-08-29T10:03:58Z',
       action: 'read_file',
       target: 'deployment-runbook.md',
       result: 'Parsed Node.js version, deploy command, env requirements.',
@@ -156,7 +156,7 @@ export const mockAnalysis: MockAnalysis = {
     },
     {
       id: 'A-002',
-      timestamp: '2025-01-14T09:42:04Z',
+      timestamp: '2026-08-29T10:04:03Z',
       action: 'read_file',
       target: 'package.json',
       result: 'Extracted engines.node and scripts entries.',
@@ -164,7 +164,7 @@ export const mockAnalysis: MockAnalysis = {
     },
     {
       id: 'A-003',
-      timestamp: '2025-01-14T09:42:06Z',
+      timestamp: '2026-08-29T10:04:07Z',
       action: 'grep',
       target: 'src/services/paymentService.js',
       result: 'Found PAYMENTS_API_KEY reference; absent from .env.example.',
@@ -172,7 +172,7 @@ export const mockAnalysis: MockAnalysis = {
     },
     {
       id: 'A-004',
-      timestamp: '2025-01-14T09:42:09Z',
+      timestamp: '2026-08-29T10:04:11Z',
       action: 'list_files',
       target: 'migrations/',
       result: 'Found 002_add_payment_status.sql. No corresponding rollback file.',
@@ -180,7 +180,7 @@ export const mockAnalysis: MockAnalysis = {
     },
     {
       id: 'A-005',
-      timestamp: '2025-01-14T09:42:12Z',
+      timestamp: '2026-08-29T10:04:14Z',
       action: 'grep',
       target: '.env.example',
       result: 'Scanned all environment variable declarations.',
@@ -188,7 +188,7 @@ export const mockAnalysis: MockAnalysis = {
     },
     {
       id: 'A-006',
-      timestamp: '2025-01-14T09:42:15Z',
+      timestamp: '2026-08-29T10:04:21Z',
       action: 'read_file',
       target: '.github/workflows/deploy.yml',
       result: 'Confirmed CI node version matrix does not cover Node 18.',
@@ -196,10 +196,10 @@ export const mockAnalysis: MockAnalysis = {
     },
   ],
   analysis: {
-    id: 'bob-analysis-20250114-094215',
-    duration: '14.3 s',
+    id: 'bob-analysis-20260829-100421',
+    duration: '23.4 s',
     filesInspected: 23,
     commandsExecuted: 6,
-    completedAt: '2025-01-14T09:42:15Z',
+    completedAt: '2026-08-29T10:04:21Z',
   },
 }

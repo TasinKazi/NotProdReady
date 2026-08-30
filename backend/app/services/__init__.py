@@ -4,6 +4,7 @@ from app.services.analyses import (  # noqa: F401
     copy_bob_config_to_workspace,
     create_workspace,
     get_analysis,
+    get_event_buffer,
     get_result,
     get_workspace,
     load_northriver_sample,

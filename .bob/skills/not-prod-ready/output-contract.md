@@ -1,11 +1,26 @@
 # Output Contract
 
-Your final assistant message must be **only** the JSON object below.
-No prose, no code fences, no explanation — the raw JSON object and nothing else.
+The canonical ReleaseResult must be written to:
 
-The BobShellRunner searches every assistant message for a valid ReleaseResult.
-It tries the most recent message first. The first message that validates against
-the schema below is accepted. All other messages are ignored.
+`output/release-result.json`
+
+This artifact is the PRIMARY machine-readable output consumed by NotProdReady.
+
+Requirements:
+
+- File must contain one raw JSON object.
+- No Markdown.
+- No code fences.
+- No prose before or after the JSON.
+- The object must validate against the schema below.
+- The final assistant message must contain the exact same JSON object.
+
+The BobShellRunner reads `output/release-result.json` first.
+
+Assistant-message parsing exists only as a compatibility fallback if the artifact
+is unexpectedly unavailable.
+If the artifact is unavailable, the BobShellRunner may fall back to parsing
+assistant messages for a valid ReleaseResult.
 
 ---
 
