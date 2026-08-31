@@ -6037,7 +6037,7 @@ Build clean. Now cycle the `disabled` flag to force Bob to kill and respawn the 
       "env": {
         "ANTHROPIC_API_KEY": "",
         "OPENAI_API_KEY": "",
-        "GEMINI_API_KEY": "AIzaSyDnC6lCX2drahV4EiD13RfjSnNl_CrokKM"
+        "GEMINI_API_KEY": ""
       },
       "disabled": true,
       "alwaysAllow": []
@@ -6056,7 +6056,7 @@ Build clean. Now cycle the `disabled` flag to force Bob to kill and respawn the 
       "env": {
         "ANTHROPIC_API_KEY": "",
         "OPENAI_API_KEY": "",
-        "GEMINI_API_KEY": "AIzaSyDnC6lCX2drahV4EiD13RfjSnNl_CrokKM"
+        "GEMINI_API_KEY": ""
       },
       "disabled": false,
       "alwaysAllow": []
